@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "admin-panel",
+      "runtimeExecutable": "/bin/bash",
+      "runtimeArgs": ["/tmp/run-admin.sh"],
+      "port": 3000
+    }
+  ]
+}

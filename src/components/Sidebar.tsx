@@ -1,0 +1,185 @@
+import { useState, useEffect } from 'react';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { Nav } from 'react-bootstrap';
+import {
+  BsSpeedometer2,
+  BsCalendarEvent,
+  BsBookmark,
+  BsPeople,
+  BsBoxArrowRight,
+  BsTagsFill,
+  BsFileEarmarkText,
+  BsBell,
+  BsCollection,
+  BsChevronDown,
+  BsChevronUp,
+  BsEnvelopeFill,
+  BsBuilding,
+  BsCodeSlash,
+} from 'react-icons/bs';
+import { useAuth } from '../auth/AuthContext';
+import { tenantApi } from '../api/tenantApi';
+
+const CATALOG_PATHS = ['/admin/events', '/admin/categories', '/admin/notifications'];
+const SETTINGS_PATHS = ['/admin/tenant'];
+
+export default function Sidebar() {
+  const { logout } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const isCatalogActive = CATALOG_PATHS.some(p => location.pathname.startsWith(p));
+  const isSettingsActive = SETTINGS_PATHS.some(p => location.pathname.startsWith(p));
+  const [catalogOpen, setCatalogOpen] = useState(isCatalogActive);
+  const [settingsOpen, setSettingsOpen] = useState(isSettingsActive);
+
+  const [tenantName, setTenantName] = useState<string>('');
+
+  useEffect(() => {
+    tenantApi.getCurrent()
+      .then(info => setTenantName(info.name))
+      .catch(() => setTenantName(''));
+  }, []);
+
+  const headerTitle = tenantName ? `${tenantName} — Админ` : 'Soldo — Админ';
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  const catalogLinks = [
+    { to: '/admin/events', icon: <BsCalendarEvent />, label: 'События' },
+    { to: '/admin/categories', icon: <BsTagsFill />, label: 'Категории' },
+    { to: '/admin/notifications', icon: <BsBell />, label: 'Уведомления' },
+  ];
+
+  const navLinkClass = ({ isActive }: { isActive: boolean }) =>
+    `nav-link text-white d-flex align-items-center gap-2 rounded mb-1 ${isActive ? 'bg-primary' : 'hover-bg-secondary'}`;
+
+  return (
+    <div
+      className="d-flex flex-column bg-dark text-white p-3"
+      style={{ width: '240px', minHeight: '100vh' }}
+    >
+      <h5 className="text-center mb-4">
+        {headerTitle}
+      </h5>
+
+      <Nav className="flex-column flex-grow-1">
+        {/* Дашборд */}
+        <Nav.Item>
+          <NavLink to="/admin" end className={navLinkClass}>
+            <BsSpeedometer2 />
+            Дашборд
+          </NavLink>
+        </Nav.Item>
+
+        {/* Бронирования */}
+        <Nav.Item>
+          <NavLink to="/admin/bookings" className={navLinkClass}>
+            <BsBookmark />
+            Бронирования
+          </NavLink>
+        </Nav.Item>
+
+        {/* Обратная связь */}
+        <Nav.Item>
+          <NavLink to="/admin/inquiries" className={navLinkClass}>
+            <BsEnvelopeFill />
+            Обратная связь
+          </NavLink>
+        </Nav.Item>
+
+        {/* Документы */}
+        <Nav.Item>
+          <NavLink to="/admin/documents" className={navLinkClass}>
+            <BsFileEarmarkText />
+            Документы
+          </NavLink>
+        </Nav.Item>
+
+        {/* Пользователи */}
+        <Nav.Item>
+          <NavLink to="/admin/users" className={navLinkClass}>
+            <BsPeople />
+            Пользователи
+          </NavLink>
+        </Nav.Item>
+
+        {/* Dropdown: Контент */}
+        <Nav.Item>
+          <button
+            onClick={() => setCatalogOpen(o => !o)}
+            className={`nav-link text-white d-flex align-items-center gap-2 rounded mb-1 w-100 border-0 bg-transparent ${
+              isCatalogActive && !catalogOpen ? 'bg-primary' : ''
+            }`}
+            style={{ cursor: 'pointer', textAlign: 'left' }}
+          >
+            <BsCollection />
+            <span className="flex-grow-1">Контент</span>
+            {catalogOpen ? <BsChevronUp size={12} /> : <BsChevronDown size={12} />}
+          </button>
+
+          {catalogOpen && (
+            <div className="ms-3 border-start border-secondary ps-2 mb-1">
+              {catalogLinks.map(link => (
+                <NavLink
+                  key={link.to}
+                  to={link.to}
+                  className={navLinkClass}
+                >
+                  {link.icon}
+                  {link.label}
+                </NavLink>
+              ))}
+            </div>
+          )}
+        </Nav.Item>
+
+        {/* Виджет */}
+        <Nav.Item>
+          <NavLink to="/admin/widget" className={navLinkClass}>
+            <BsCodeSlash />
+            Виджет
+          </NavLink>
+        </Nav.Item>
+
+        {/* Dropdown: Организация */}
+        <Nav.Item>
+          <button
+            onClick={() => setSettingsOpen(o => !o)}
+            className={`nav-link text-white d-flex align-items-center gap-2 rounded mb-1 w-100 border-0 bg-transparent ${
+              isSettingsActive && !settingsOpen ? 'bg-primary' : ''
+            }`}
+            style={{ cursor: 'pointer', textAlign: 'left' }}
+          >
+            <BsBuilding />
+            <span className="flex-grow-1">Организация</span>
+            {settingsOpen ? <BsChevronUp size={12} /> : <BsChevronDown size={12} />}
+          </button>
+
+          {settingsOpen && (
+            <div className="ms-3 border-start border-secondary ps-2 mb-1">
+              <NavLink to="/admin/tenant" className={navLinkClass}>
+                <BsBuilding />
+                Настройки
+              </NavLink>
+            </div>
+          )}
+        </Nav.Item>
+      </Nav>
+
+      <Nav.Item className="mt-auto">
+        <Nav.Link
+          onClick={handleLogout}
+          className="text-white d-flex align-items-center gap-2"
+          role="button"
+        >
+          <BsBoxArrowRight />
+          Выйти
+        </Nav.Link>
+      </Nav.Item>
+    </div>
+  );
+}
