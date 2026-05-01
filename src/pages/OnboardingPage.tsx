@@ -234,11 +234,6 @@ function Step2({ onNext }: Step2Props) {
 
   const orgSlug = slug ?? 'your-org';
 
-  const envContent = `TELEGRAM_BOT_TOKEN=ваш_токен_от_BotFather
-TELEGRAM_BOT_USERNAME=имя_вашего_бота
-SOLDO_API_URL=https://ваш-домен.ru
-SOLDO_TENANT_SLUG=${orgSlug}`;
-
   const widgetContent = `<div id="soldo-widget"></div>
 <script src="https://ваш-домен/widget.js"
   data-tenant="${orgSlug}">
@@ -250,7 +245,7 @@ SOLDO_TENANT_SLUG=${orgSlug}`;
         Ваши идентификаторы
       </h5>
       <p style={{ color: '#6c757d', fontSize: '0.9rem' }} className="mb-4">
-        Используйте эти данные при настройке бота и виджета
+        Используйте эти данные при настройке виджета
       </p>
 
       {loadingSlug ? (
@@ -291,49 +286,11 @@ SOLDO_TENANT_SLUG=${orgSlug}`;
               </Button>
             </div>
             <small style={{ color: '#6c757d' }}>
-              Постоянный идентификатор. Используйте в боте и виджете.
+              Постоянный идентификатор. Используйте в виджете.
             </small>
           </div>
 
-          {/* Card 2 — Telegram */}
-          <div
-            className="mb-3 p-3"
-            style={{ border: '1px solid #dee2e6', borderRadius: 8 }}
-          >
-            <div style={{ fontWeight: 600, marginBottom: 8, fontSize: '0.9rem' }}>
-              ✈ Telegram бот
-            </div>
-            <div style={{ position: 'relative' }}>
-              <pre
-                style={{
-                  background: '#f8f9fa',
-                  padding: '12px',
-                  borderRadius: 6,
-                  border: '1px solid #dee2e6',
-                  fontSize: '0.8rem',
-                  fontFamily: 'monospace',
-                  margin: 0,
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-all',
-                }}
-              >
-                {envContent}
-              </pre>
-              <Button
-                variant="outline-secondary"
-                size="sm"
-                onClick={() => copy('env', envContent)}
-                style={{ position: 'absolute', bottom: 8, right: 8, minWidth: 40 }}
-              >
-                {copied === 'env' ? '✓' : '📋'}
-              </Button>
-            </div>
-            <small style={{ color: '#6c757d' }}>
-              Переменные среды (.env файл)
-            </small>
-          </div>
-
-          {/* Card 3 — Widget */}
+          {/* Card 2 — Widget */}
           <div
             className="mb-4 p-3"
             style={{ border: '1px solid #dee2e6', borderRadius: 8 }}

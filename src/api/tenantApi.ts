@@ -13,16 +13,4 @@ export const tenantApi = {
     const res = await client.put<TenantInfo>('/admin/tenant/config', data);
     return res.data;
   },
-
-  /** POST /admin/tenant/telegram-bot — подключить Telegram-бота */
-  connectTelegramBot: async (botToken: string): Promise<TenantInfo> => {
-    const res = await client.post<TenantInfo>('/admin/tenant/telegram-bot', { botToken });
-    return res.data;
-  },
-
-  /** DELETE /admin/tenant/telegram-bot — отключить Telegram-бота */
-  disconnectTelegramBot: async (): Promise<TenantInfo> => {
-    const res = await client.delete<TenantInfo>('/admin/tenant/telegram-bot');
-    return res.data;
-  },
 };

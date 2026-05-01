@@ -91,8 +91,6 @@ export interface Booking {
   guestName?: string;
   guestPhone?: string;
   guestEmail?: string;
-  /** Telegram chat ID — заполнен, если бронирование создано через бота */
-  telegramChatId?: number;
   /** Сводка по документам бронирования */
   documentTotal?: number;
   documentSigned?: number;
@@ -263,10 +261,6 @@ export interface TenantInfo {
   eventLabel: string;
   participantLabel: string;
   bookingLabel: string;
-  // Telegram bot
-  telegramBotEnabled: boolean;
-  telegramBotUsername?: string;
-  telegramWebhookUrl?: string;
 }
 
 export interface TenantConfigUpdateRequest {

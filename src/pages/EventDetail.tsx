@@ -5,7 +5,7 @@ import {
   Modal, Form,
 } from 'react-bootstrap';
 import {
-  BsPencil, BsArrowLeft, BsCheckCircle, BsXCircle, BsCashCoin, BsPlusCircle, BsTelegram,
+  BsPencil, BsArrowLeft, BsCheckCircle, BsXCircle, BsCashCoin, BsPlusCircle,
 } from 'react-icons/bs';
 import { eventApi } from '../api/eventApi';
 import { bookingApi } from '../api/bookingApi';
@@ -319,30 +319,14 @@ export default function EventDetail() {
                       {isGuest ? (
                         <span>
                           {booking.guestName ?? booking.userName ?? '—'}
-                          {booking.telegramChatId ? (
-                            <Badge
-                              bg="primary"
-                              className="ms-1"
-                              style={{ fontSize: '0.65rem' }}
-                              title={`Telegram ID: ${booking.telegramChatId}`}
-                            >
-                              <BsTelegram className="me-1" />Telegram
-                            </Badge>
-                          ) : (
-                            <Badge bg="secondary" className="ms-1" style={{ fontSize: '0.65rem' }}>
-                              Гость
-                            </Badge>
-                          )}
+                          <Badge bg="secondary" className="ms-1" style={{ fontSize: '0.65rem' }}>
+                            Гость
+                          </Badge>
                           {(booking.guestPhone || booking.guestEmail) && (
                             <div className="text-muted" style={{ fontSize: '0.8rem' }}>
                               {booking.guestPhone && <span>{booking.guestPhone}</span>}
                               {booking.guestPhone && booking.guestEmail && ' · '}
                               {booking.guestEmail && <span>{booking.guestEmail}</span>}
-                            </div>
-                          )}
-                          {booking.telegramChatId && (
-                            <div className="text-muted" style={{ fontSize: '0.78rem' }}>
-                              tg: {booking.telegramChatId}
                             </div>
                           )}
                         </span>

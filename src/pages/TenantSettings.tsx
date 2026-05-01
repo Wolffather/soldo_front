@@ -3,7 +3,7 @@ import {
   Card, Row, Col, Form, Button, Spinner, Alert, Badge, Table,
 } from 'react-bootstrap';
 import {
-  BsBuilding, BsCreditCard2Front, BsGear, BsTelegram, BsCheckCircle, BsClipboard, BsClipboardCheck,
+  BsBuilding, BsCreditCard2Front, BsGear, BsCheckCircle, BsClipboard, BsClipboardCheck,
 } from 'react-icons/bs';
 import { tenantApi } from '../api/tenantApi';
 import type { TenantInfo, TenantConfigUpdateRequest } from '../types';
@@ -29,10 +29,6 @@ export default function TenantSettings() {
   const [saveLoading, setSaveLoading] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [slugCopied, setSlugCopied] = useState(false);
-  const [botToken, setBotToken] = useState('');
-  const [botLoading, setBotLoading] = useState(false);
-  const [botError, setBotError] = useState('');
-  const [webhookCopied, setWebhookCopied] = useState(false);
 
   const [form, setForm] = useState<TenantConfigUpdateRequest>({
     eventLabel: 'Событие',
@@ -79,40 +75,6 @@ export default function TenantSettings() {
       setError('Ошибка сохранения настроек');
     } finally {
       setSaveLoading(false);
-    }
-  };
-
-  const handleConnectBot = async () => {
-    if (!botToken.trim()) {
-      setBotError('Введите токен бота');
-      return;
-    }
-    setBotLoading(true);
-    setBotError('');
-    try {
-      const updated = await tenantApi.connectTelegramBot(botToken.trim());
-      setTenant(updated);
-      setBotToken('');
-    } catch (e: unknown) {
-      const msg = (e as { response?: { data?: { message?: string } } })
-        ?.response?.data?.message;
-      setBotError(msg ?? 'Не удалось подключить бота. Проверьте токен.');
-    } finally {
-      setBotLoading(false);
-    }
-  };
-
-  const handleDisconnectBot = async () => {
-    if (!window.confirm('Отключить Telegram-бота?')) return;
-    setBotLoading(true);
-    setBotError('');
-    try {
-      const updated = await tenantApi.disconnectTelegramBot();
-      setTenant(updated);
-    } catch {
-      setBotError('Ошибка отключения бота');
-    } finally {
-      setBotLoading(false);
     }
   };
 
@@ -243,7 +205,7 @@ export default function TenantSettings() {
                       </Button>
                     </div>
                     <Form.Text className="text-muted">
-                      Используется в боте (<code>SOLDO_TENANT_SLUG</code>) и виджете (<code>data-tenant</code>)
+                      Используется в виджете (<code>data-tenant</code>)
                     </Form.Text>
                   </Form.Group>
                 </Col>
@@ -335,137 +297,6 @@ export default function TenantSettings() {
                     : 'Сохранить изменения'}
                 </Button>
               </div>
-            </Card.Body>
-          </Card>
-
-          {/* ── Telegram Bot ── */}
-          <Card className="mt-4">
-            <Card.Header className="d-flex align-items-center gap-2">
-              <BsTelegram className="text-primary" />
-              <strong>Telegram Бот</strong>
-              {tenant?.telegramBotEnabled && (
-                <Badge bg="success" className="ms-auto fw-normal">
-                  <BsCheckCircle className="me-1" />Подключён
-                </Badge>
-              )}
-            </Card.Header>
-            <Card.Body>
-              {botError && (
-                <Alert variant="danger" dismissible onClose={() => setBotError('')}>
-                  {botError}
-                </Alert>
-              )}
-
-              {tenant?.telegramBotEnabled ? (
-                <>
-                  <p className="text-muted mb-3">
-                    {tenant.telegramBotUsername
-                      ? <>Бот <strong>@{tenant.telegramBotUsername}</strong> подключён.</>
-                      : 'Бот подключён.'
-                    }{' '}
-                    Клиенты могут писать ему в Telegram, чтобы посмотреть события и оставить бронирование.
-                  </p>
-
-                  <Alert variant="info" className="mb-3 py-2">
-                    <small>
-                      <strong>Webhook для бота:</strong> если бот не отвечает, убедитесь что
-                      webhook зарегистрирован. Откройте эту ссылку в браузере один раз:
-                    </small>
-                    <div className="input-group input-group-sm mt-2">
-                      <Form.Control
-                        readOnly
-                        value={`https://api.telegram.org/bot<TOKEN>/setWebhook?url=${tenant.telegramWebhookUrl}`}
-                        style={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
-                      />
-                      <Button
-                        variant="outline-secondary"
-                        size="sm"
-                        onClick={() => {
-                          navigator.clipboard.writeText(
-                            `https://api.telegram.org/bot<TOKEN>/setWebhook?url=${tenant.telegramWebhookUrl}`
-                          );
-                          setWebhookCopied(true);
-                          setTimeout(() => setWebhookCopied(false), 2000);
-                        }}
-                      >
-                        {webhookCopied ? <BsClipboardCheck className="text-success" /> : <BsClipboard />}
-                      </Button>
-                    </div>
-                    <small className="text-muted">Замените <code>&lt;TOKEN&gt;</code> на токен вашего бота.</small>
-                  </Alert>
-
-                  <div className="d-flex gap-2">
-                    {tenant.telegramBotUsername && (
-                      <a
-                        href={`https://t.me/${tenant.telegramBotUsername}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="btn btn-outline-primary"
-                      >
-                        <BsTelegram className="me-2" />
-                        Открыть бота
-                      </a>
-                    )}
-                    <Button
-                      variant="outline-danger"
-                      onClick={handleDisconnectBot}
-                      disabled={botLoading}
-                    >
-                      {botLoading
-                        ? <><Spinner size="sm" className="me-2" />Отключение...</>
-                        : 'Отключить'}
-                    </Button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <p className="text-muted mb-3">
-                    Подключите Telegram-бота, чтобы ваши клиенты могли записываться
-                    прямо из Telegram — без установки приложений и регистрации на сайте.
-                  </p>
-
-                  <Row className="g-3">
-                    <Col md={8}>
-                      <Form.Group>
-                        <Form.Label>Bot Token (от @BotFather)</Form.Label>
-                        <Form.Control
-                          type="password"
-                          value={botToken}
-                          onChange={e => setBotToken(e.target.value)}
-                          placeholder="1234567890:ABCdefGHIjklMNOpqrsTUVwxyz"
-                          disabled={botLoading}
-                          autoComplete="off"
-                        />
-                        <Form.Text className="text-muted">
-                          Создайте бота через @BotFather в Telegram и вставьте токен сюда.
-                        </Form.Text>
-                      </Form.Group>
-                    </Col>
-                    <Col md={4} className="d-flex align-items-end">
-                      <Button
-                        variant="primary"
-                        onClick={handleConnectBot}
-                        disabled={botLoading || !botToken.trim()}
-                        className="w-100"
-                      >
-                        {botLoading
-                          ? <><Spinner size="sm" className="me-2" />Подключение...</>
-                          : <><BsTelegram className="me-2" />Подключить</>}
-                      </Button>
-                    </Col>
-                  </Row>
-
-                  <Alert variant="info" className="mt-3 mb-0 py-2">
-                    <small>
-                      <strong>Как подключить:</strong> создайте бота через <strong>@BotFather</strong>,
-                      вставьте полученный токен выше и нажмите «Подключить». После этого нужно
-                      будет зарегистрировать webhook — откроется инструкция с готовой ссылкой.
-                      Доступные команды: <code>/start</code>, <code>/book</code>,{' '}
-                      <code>/mybookings</code>, <code>/help</code>.
-                    </small>
-                  </Alert>
-                </>
-              )}
             </Card.Body>
           </Card>
         </Col>
