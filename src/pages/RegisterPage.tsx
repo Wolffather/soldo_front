@@ -82,8 +82,7 @@ export default function RegisterPage() {
         password,
         businessType: 'OTHER',
       });
-      const token = res.token.startsWith('Bearer ') ? res.token : `Bearer ${res.token}`;
-      localStorage.setItem(STORAGE_KEYS.ADMIN_TOKEN, token);
+      localStorage.setItem(STORAGE_KEYS.ADMIN_TOKEN, `Bearer ${res.token}`);
       navigate('/onboarding');
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string } } };

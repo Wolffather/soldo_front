@@ -3,7 +3,9 @@ import { STORAGE_KEYS } from '../constants/storageKeys';
 /** Decodes JWT payload and returns `exp` in milliseconds, or null if malformed */
 export function getTokenExpMs(token: string): number | null {
   try {
-    const payload = token.split('.')[1];
+    // убираем Bearer prefix если есть
+    const raw = token.startsWith('Bearer ') ? token.slice(7) : token;
+    const payload = raw.split('.')[1];
     const decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
     if (typeof decoded.exp === 'number') {
       return decoded.exp * 1000;
