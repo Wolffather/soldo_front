@@ -32,6 +32,7 @@ export default function TenantSettings() {
   const [botToken, setBotToken] = useState('');
   const [botLoading, setBotLoading] = useState(false);
   const [botError, setBotError] = useState('');
+  const [webhookCopied, setWebhookCopied] = useState(false);
 
   const [form, setForm] = useState<TenantConfigUpdateRequest>({
     eventLabel: 'Событие',
@@ -358,10 +359,41 @@ export default function TenantSettings() {
               {tenant?.telegramBotEnabled ? (
                 <>
                   <p className="text-muted mb-3">
-                    Бот <strong>@{tenant.telegramBotUsername}</strong> подключён.
-                    Клиенты могут писать ему в Telegram, чтобы посмотреть события и
-                    оставить бронирование.
+                    {tenant.telegramBotUsername
+                      ? <>Бот <strong>@{tenant.telegramBotUsername}</strong> подключён.</>
+                      : 'Бот подключён.'
+                    }{' '}
+                    Клиенты могут писать ему в Telegram, чтобы посмотреть события и оставить бронирование.
                   </p>
+
+                  <Alert variant="info" className="mb-3 py-2">
+                    <small>
+                      <strong>Webhook для бота:</strong> если бот не отвечает, убедитесь что
+                      webhook зарегистрирован. Откройте эту ссылку в браузере один раз:
+                    </small>
+                    <div className="input-group input-group-sm mt-2">
+                      <Form.Control
+                        readOnly
+                        value={`https://api.telegram.org/bot<TOKEN>/setWebhook?url=${tenant.telegramWebhookUrl}`}
+                        style={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
+                      />
+                      <Button
+                        variant="outline-secondary"
+                        size="sm"
+                        onClick={() => {
+                          navigator.clipboard.writeText(
+                            `https://api.telegram.org/bot<TOKEN>/setWebhook?url=${tenant.telegramWebhookUrl}`
+                          );
+                          setWebhookCopied(true);
+                          setTimeout(() => setWebhookCopied(false), 2000);
+                        }}
+                      >
+                        {webhookCopied ? <BsClipboardCheck className="text-success" /> : <BsClipboard />}
+                      </Button>
+                    </div>
+                    <small className="text-muted">Замените <code>&lt;TOKEN&gt;</code> на токен вашего бота.</small>
+                  </Alert>
+
                   <div className="d-flex gap-2">
                     {tenant.telegramBotUsername && (
                       <a
@@ -425,18 +457,11 @@ export default function TenantSettings() {
 
                   <Alert variant="info" className="mt-3 mb-0 py-2">
                     <small>
-                      <strong>Как это работает:</strong> создайте бота через @BotFather,
-                      вставьте сюда полученный токен. Мы автоматически зарегистрируем webhook,
-                      и бот сразу начнёт отвечать. Доступные команды: <code>/start</code>,
-                      <code>/book</code>, <code>/mybookings</code>, <code>/help</code>.
-                    </small>
-                  </Alert>
-                  <Alert variant="warning" className="mt-2 mb-0 py-2">
-                    <small>
-                      <strong>Требование Telegram:</strong> приложение должно быть доступно
-                      по публичному HTTPS-адресу. Для локальной разработки используйте
-                      ngrok/Cloudflare Tunnel и задайте переменную окружения{' '}
-                      <code>APP_PUBLIC_URL=https://ваш-адрес</code> перед запуском бэкенда.
+                      <strong>Как подключить:</strong> создайте бота через <strong>@BotFather</strong>,
+                      вставьте полученный токен выше и нажмите «Подключить». После этого нужно
+                      будет зарегистрировать webhook — откроется инструкция с готовой ссылкой.
+                      Доступные команды: <code>/start</code>, <code>/book</code>,{' '}
+                      <code>/mybookings</code>, <code>/help</code>.
                     </small>
                   </Alert>
                 </>

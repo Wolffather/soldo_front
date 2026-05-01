@@ -266,6 +266,7 @@ export interface TenantInfo {
   // Telegram bot
   telegramBotEnabled: boolean;
   telegramBotUsername?: string;
+  telegramWebhookUrl?: string;
 }
 
 export interface TenantConfigUpdateRequest {
