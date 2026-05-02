@@ -9,14 +9,13 @@ const client = axios.create({
   },
 });
 
-const ADMIN_ROLES = new Set(['ADMIN', 'MODERATOR']);
+const ADMIN_ROLES = new Set(['ADMIN']);
 
 /**
  * Resolve the bearer token for admin API calls.
  * Priority:
  *   1. Explicit admin-panel token (stored by AuthContext.login / CabinetLogin password flow)
- *   2. Cabinet user_token if the user has an admin role
- *      (covers the case where admin logged in via the public site cabinet)
+ *   2. Cabinet user_token if it has an ADMIN role
  */
 function resolveAdminToken(): string | null {
   const adminToken = localStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN);

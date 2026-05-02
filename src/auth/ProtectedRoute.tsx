@@ -7,7 +7,7 @@ interface Props {
   children: React.ReactNode;
 }
 
-const ADMIN_ROLES = new Set(['ADMIN', 'MODERATOR']);
+const ADMIN_ROLES = new Set(['ADMIN']);
 
 /**
  * Check whether the cabinet user_token belongs to an admin and is not expired.

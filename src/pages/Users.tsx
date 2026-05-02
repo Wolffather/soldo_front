@@ -9,7 +9,6 @@ export default function Users() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
-  const [grantingAdmin, setGrantingAdmin] = useState<number | null>(null);
 
   useEffect(() => {
     loadUsers();
@@ -26,21 +25,6 @@ export default function Users() {
     }
   };
 
-  const handleGrantAdmin = async (user: User) => {
-    if (user.role === 'ADMIN') return;
-    const name = [user.firstName, user.lastName].filter(Boolean).join(' ') || user.username || `#${user.id}`;
-    if (!confirm(`Выдать права администратора пользователю ${name}?`)) return;
-    setGrantingAdmin(user.id);
-    try {
-      const updated = await userApi.grantAdminRole(user.id);
-      setUsers((us) => us.map((u) => (u.id === updated.id ? updated : u)));
-    } catch (e: any) {
-      alert(e?.response?.data?.message ?? 'Ошибка при выдаче прав');
-    } finally {
-      setGrantingAdmin(null);
-    }
-  };
-
   if (loading) {
     return (
       <div className="text-center py-5">
@@ -48,15 +32,6 @@ export default function Users() {
       </div>
     );
   }
-
-  const roleBadge = (role: string) => {
-    const variants: Record<string, string> = {
-      ADMIN: 'danger',
-      MODERATOR: 'warning',
-      USER: 'primary',
-    };
-    return <Badge bg={variants[role] ?? 'secondary'}>{role}</Badge>;
-  };
 
   const q = search.toLowerCase().trim();
   const filteredUsers = q
@@ -74,7 +49,7 @@ export default function Users() {
   return (
     <>
       <div className="d-flex align-items-center justify-content-between mb-4">
-        <h4 className="mb-0">Пользователи ({filteredUsers.length}{q ? ` из ${users.length}` : ''})</h4>
+        <h4 className="mb-0">Администраторы ({filteredUsers.length}{q ? ` из ${users.length}` : ''})</h4>
       </div>
 
       {error && <Alert variant="danger">{error}</Alert>}
@@ -100,9 +75,7 @@ export default function Users() {
                 <th>Имя</th>
                 <th>Username</th>
                 <th>Email / Телефон</th>
-                <th>Роль</th>
                 <th>Дата регистрации</th>
-                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -120,28 +93,15 @@ export default function Users() {
                       {!user.email && !user.phone && '—'}
                     </small>
                   </td>
-                  <td>{roleBadge(user.role)}</td>
                   <td className="text-muted">
                     {user.createdAt ? formatDateTime(user.createdAt) : '—'}
-                  </td>
-                  <td>
-                    {user.role !== 'ADMIN' && (
-                      <Button
-                        variant="outline-danger"
-                        size="sm"
-                        onClick={() => handleGrantAdmin(user)}
-                        disabled={grantingAdmin === user.id}
-                      >
-                        {grantingAdmin === user.id ? '...' : 'Сделать админом'}
-                      </Button>
-                    )}
                   </td>
                 </tr>
               ))}
               {filteredUsers.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="text-center text-muted py-4">
-                    {q ? 'Пользователи не найдены' : 'Нет пользователей'}
+                  <td colSpan={5} className="text-center text-muted py-4">
+                    {q ? 'Не найдено' : 'Нет администраторов'}
                   </td>
                 </tr>
               )}

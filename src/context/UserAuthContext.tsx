@@ -13,7 +13,7 @@ interface UserAuthState {
 
 const UserAuthContext = createContext<UserAuthState | null>(null);
 
-/** JWT payload: sub = userId (string), role = "USER" | "ADMIN" */
+/** JWT payload: sub = userId (string), role = "ADMIN" */
 function parseJwtPayload(token: string): { sub?: string; role?: string } {
   try {
     const payload = token.split('.')[1];

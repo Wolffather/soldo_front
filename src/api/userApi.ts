@@ -7,9 +7,8 @@ export const userApi = {
     return response.data;
   },
 
-  /** Выдать роль ADMIN пользователю по его внутреннему ID. */
-  grantAdminRole: async (id: number): Promise<User> => {
-    const response = await client.patch(`/users/${id}/role`);
+  getById: async (id: number): Promise<User> => {
+    const response = await client.get(`/users/${id}`);
     return response.data;
   },
 };
