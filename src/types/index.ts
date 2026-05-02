@@ -250,14 +250,6 @@ export interface TenantInfo {
   name: string;
   domain?: string;
   status: string;
-  // Subscription
-  plan: 'FREE' | 'STARTER' | 'PRO' | 'ENTERPRISE';
-  maxEvents?: number;
-  maxBookingsPerMonth?: number;
-  maxAdminUsers?: number;
-  customDomainEnabled: boolean;
-  apiAccessEnabled: boolean;
-  // Config labels
   eventLabel: string;
   participantLabel: string;
   bookingLabel: string;

@@ -14,14 +14,12 @@ import {
   BsChevronDown,
   BsChevronUp,
   BsEnvelopeFill,
-  BsBuilding,
   BsCodeSlash,
 } from 'react-icons/bs';
 import { useAuth } from '../auth/AuthContext';
 import { tenantApi } from '../api/tenantApi';
 
 const CATALOG_PATHS = ['/admin/events', '/admin/categories', '/admin/notifications'];
-const SETTINGS_PATHS = ['/admin/tenant'];
 
 export default function Sidebar() {
   const { logout } = useAuth();
@@ -29,9 +27,7 @@ export default function Sidebar() {
   const navigate = useNavigate();
 
   const isCatalogActive = CATALOG_PATHS.some(p => location.pathname.startsWith(p));
-  const isSettingsActive = SETTINGS_PATHS.some(p => location.pathname.startsWith(p));
   const [catalogOpen, setCatalogOpen] = useState(isCatalogActive);
-  const [settingsOpen, setSettingsOpen] = useState(isSettingsActive);
 
   const [tenantName, setTenantName] = useState<string>('');
 
@@ -143,30 +139,6 @@ export default function Sidebar() {
             <BsCodeSlash />
             Виджет
           </NavLink>
-        </Nav.Item>
-
-        {/* Dropdown: Организация */}
-        <Nav.Item>
-          <button
-            onClick={() => setSettingsOpen(o => !o)}
-            className={`nav-link text-white d-flex align-items-center gap-2 rounded mb-1 w-100 border-0 bg-transparent ${
-              isSettingsActive && !settingsOpen ? 'bg-primary' : ''
-            }`}
-            style={{ cursor: 'pointer', textAlign: 'left' }}
-          >
-            <BsBuilding />
-            <span className="flex-grow-1">Организация</span>
-            {settingsOpen ? <BsChevronUp size={12} /> : <BsChevronDown size={12} />}
-          </button>
-
-          {settingsOpen && (
-            <div className="ms-3 border-start border-secondary ps-2 mb-1">
-              <NavLink to="/admin/tenant" className={navLinkClass}>
-                <BsBuilding />
-                Настройки
-              </NavLink>
-            </div>
-          )}
         </Nav.Item>
       </Nav>
 

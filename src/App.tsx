@@ -14,7 +14,6 @@ import DocumentTemplates from './pages/DocumentTemplates';
 import Users from './pages/Users';
 import Inquiries from './pages/Inquiries';
 import NotificationSettings from './pages/NotificationSettings';
-import TenantSettings from './pages/TenantSettings';
 import WidgetSettings from './pages/WidgetSettings';
 import NotFound from './pages/NotFound';
 
@@ -56,7 +55,6 @@ export default function App() {
         <Route path="users" element={<Users />} />
         <Route path="inquiries" element={<Inquiries />} />
         <Route path="notifications" element={<NotificationSettings />} />
-        <Route path="tenant" element={<TenantSettings />} />
         <Route path="widget" element={<WidgetSettings />} />
       </Route>
 

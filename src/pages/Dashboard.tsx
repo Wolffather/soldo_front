@@ -1,18 +1,38 @@
 import { useState, useEffect } from 'react';
-import { Row, Col, Card, Table, Spinner, Alert, ProgressBar } from 'react-bootstrap';
+import {
+  Row, Col, Card, Table, Spinner, Alert, ProgressBar,
+  Form, Button,
+} from 'react-bootstrap';
 import { Link } from 'react-router-dom';
-import { BsCalendarEvent, BsBookmark, BsCashCoin, BsExclamationTriangle } from 'react-icons/bs';
+import {
+  BsCalendarEvent, BsBookmark, BsCashCoin, BsExclamationTriangle,
+  BsGear, BsCheckCircle, BsClipboard, BsClipboardCheck,
+} from 'react-icons/bs';
 import { bookingApi } from '../api/bookingApi';
 import { eventApi } from '../api/eventApi';
-import type { BookingSummary, Event, Page } from '../types';
+import { tenantApi } from '../api/tenantApi';
+import type { BookingSummary, Event, Page, TenantInfo, TenantConfigUpdateRequest } from '../types';
 import { formatDate } from '../utils/format';
 
 export default function Dashboard() {
   const [summaries, setSummaries] = useState<BookingSummary[]>([]);
   const [eventPage, setEventPage] = useState<Page<Event> | null>(null);
   const [monthlyRevenue, setMonthlyRevenue] = useState<number | null>(null);
+  const [tenant, setTenant] = useState<TenantInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const [form, setForm] = useState<TenantConfigUpdateRequest>({
+    eventLabel: 'Событие',
+    participantLabel: 'Участник',
+    bookingLabel: 'Бронирование',
+    name: '',
+    domain: '',
+  });
+  const [saving, setSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [slugCopied, setSlugCopied] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -20,19 +40,44 @@ export default function Dashboard() {
 
   const loadData = async () => {
     try {
-      const [summaryData, eventsData, revenue] = await Promise.all([
+      const [summaryData, eventsData, revenue, tenantData] = await Promise.all([
         bookingApi.getAllSummaries(),
         eventApi.getAll(0, 5),
         bookingApi.getMonthlyRevenue(),
+        tenantApi.getCurrent(),
       ]);
       setSummaries(summaryData);
       setEventPage(eventsData);
       setMonthlyRevenue(revenue);
+      setTenant(tenantData);
+      setForm({
+        eventLabel: tenantData.eventLabel,
+        participantLabel: tenantData.participantLabel,
+        bookingLabel: tenantData.bookingLabel,
+        name: tenantData.name,
+        domain: tenantData.domain ?? '',
+      });
     } catch (err) {
       console.error('Dashboard error:', err);
       setError('Ошибка загрузки данных');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    setSaveSuccess(false);
+    setSaveError('');
+    try {
+      const updated = await tenantApi.updateConfig(form);
+      setTenant(updated);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch {
+      setSaveError('Не удалось сохранить');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -57,6 +102,7 @@ export default function Dashboard() {
     <>
       <h4 className="mb-4">Дашборд</h4>
 
+      {/* ── Метрики ── */}
       <Row className="mb-4">
         <Col md={3}>
           <Card className="text-center border-primary">
@@ -96,7 +142,8 @@ export default function Dashboard() {
         </Col>
       </Row>
 
-      <Row>
+      {/* ── Таблицы ── */}
+      <Row className="mb-4">
         <Col md={6}>
           <Card>
             <Card.Header className="d-flex justify-content-between align-items-center">
@@ -130,9 +177,7 @@ export default function Dashboard() {
                   ))}
                   {events.length === 0 && (
                     <tr>
-                      <td colSpan={4} className="text-center text-muted py-3">
-                        Нет событий
-                      </td>
+                      <td colSpan={4} className="text-center text-muted py-3">Нет событий</td>
                     </tr>
                   )}
                 </tbody>
@@ -162,7 +207,6 @@ export default function Dashboard() {
                     const fillPercent = total > 0
                       ? Math.round(((s.confirmedBookings + s.pendingBookings) / total) * 100)
                       : 0;
-
                     return (
                       <tr key={s.eventId}>
                         <td>
@@ -183,13 +227,115 @@ export default function Dashboard() {
                   })}
                   {summaries.length === 0 && (
                     <tr>
-                      <td colSpan={4} className="text-center text-muted py-3">
-                        Нет данных
-                      </td>
+                      <td colSpan={4} className="text-center text-muted py-3">Нет данных</td>
                     </tr>
                   )}
                 </tbody>
               </Table>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* ── Настройки организации ── */}
+      <hr className="my-2" />
+      <div className="d-flex align-items-center gap-2 my-3">
+        <BsGear className="text-muted" />
+        <span className="fw-semibold text-muted">Настройки организации</span>
+      </div>
+
+      <Row className="g-3">
+        <Col md={8}>
+          <Card>
+            <Card.Body>
+              {saveError && (
+                <Alert variant="danger" dismissible onClose={() => setSaveError('')} className="py-2">
+                  {saveError}
+                </Alert>
+              )}
+              {saveSuccess && (
+                <Alert variant="success" className="d-flex align-items-center gap-2 py-2">
+                  <BsCheckCircle /> Сохранено
+                </Alert>
+              )}
+              <Row className="g-3">
+                <Col md={6}>
+                  <Form.Label className="small text-muted mb-1">Slug</Form.Label>
+                  <div className="input-group input-group-sm">
+                    <Form.Control
+                      value={tenant?.slug ?? ''}
+                      readOnly
+                      style={{ fontFamily: 'monospace', background: '#f8f9fa' }}
+                    />
+                    <Button
+                      variant="outline-secondary"
+                      size="sm"
+                      onClick={() => {
+                        navigator.clipboard.writeText(tenant?.slug ?? '');
+                        setSlugCopied(true);
+                        setTimeout(() => setSlugCopied(false), 2000);
+                      }}
+                    >
+                      {slugCopied ? <BsClipboardCheck className="text-success" /> : <BsClipboard />}
+                    </Button>
+                  </div>
+                </Col>
+                <Col md={6}>
+                  <Form.Label className="small text-muted mb-1">Название</Form.Label>
+                  <Form.Control
+                    size="sm"
+                    value={form.name ?? ''}
+                    onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                    placeholder="Название организации"
+                  />
+                </Col>
+                <Col md={6}>
+                  <Form.Label className="small text-muted mb-1">Кастомный домен</Form.Label>
+                  <Form.Control
+                    size="sm"
+                    value={form.domain ?? ''}
+                    onChange={e => setForm(f => ({ ...f, domain: e.target.value }))}
+                    placeholder="camp.example.ru"
+                  />
+                </Col>
+                <Col xs={12}>
+                  <div className="text-muted small mb-2">Терминология</div>
+                  <Row className="g-2">
+                    <Col md={4}>
+                      <Form.Control
+                        size="sm"
+                        placeholder="Событие"
+                        value={form.eventLabel}
+                        onChange={e => setForm(f => ({ ...f, eventLabel: e.target.value }))}
+                      />
+                      <Form.Text className="text-muted">Событие</Form.Text>
+                    </Col>
+                    <Col md={4}>
+                      <Form.Control
+                        size="sm"
+                        placeholder="Участник"
+                        value={form.participantLabel}
+                        onChange={e => setForm(f => ({ ...f, participantLabel: e.target.value }))}
+                      />
+                      <Form.Text className="text-muted">Участник</Form.Text>
+                    </Col>
+                    <Col md={4}>
+                      <Form.Control
+                        size="sm"
+                        placeholder="Бронирование"
+                        value={form.bookingLabel}
+                        onChange={e => setForm(f => ({ ...f, bookingLabel: e.target.value }))}
+                      />
+                      <Form.Text className="text-muted">Бронирование</Form.Text>
+                    </Col>
+                  </Row>
+                </Col>
+              </Row>
+              <div className="mt-3">
+                <Button size="sm" variant="primary" onClick={handleSave} disabled={saving}>
+                  {saving ? <><Spinner size="sm" className="me-1" />Сохранение...</> : 'Сохранить'}
+                </Button>
+              </div>
             </Card.Body>
           </Card>
         </Col>
