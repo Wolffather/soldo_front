@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Button,
@@ -36,11 +36,6 @@ const TERMINOLOGY: Record<BusinessType, TerminologyLabels> = {
     participantLabel: 'Студент',
     bookingLabel: 'Запись',
   },
-  CLINIC: {
-    eventLabel: 'Приём',
-    participantLabel: 'Пациент',
-    bookingLabel: 'Запись',
-  },
   TOUR: {
     eventLabel: 'Тур',
     participantLabel: 'Гость',
@@ -66,26 +61,13 @@ const BIZ_CARDS: BizCard[] = [
   { type: 'CAMP',   icon: '🏕️', title: 'Лагерь',        hint: 'Смены, участники'  },
   { type: 'STUDIO', icon: '🎨', title: 'Студия/Секция',  hint: 'Занятия, клиенты' },
   { type: 'SCHOOL', icon: '📚', title: 'Школа',          hint: 'Курсы, студенты'  },
-  { type: 'CLINIC', icon: '🏥', title: 'Клиника',        hint: 'Приёмы, пациенты' },
   { type: 'TOUR',   icon: '✈️', title: 'Туры',           hint: 'Туры, гости'      },
   { type: 'OTHER',  icon: '⚙️', title: 'Другое',         hint: 'Настроить позже'  },
 ];
 
-// ── Helper: copy to clipboard with 2 s feedback ───────────────────────────
-
-function useCopy(): [string | null, (key: string, text: string) => void] {
-  const [copied, setCopied] = useState<string | null>(null);
-  const copy = (key: string, text: string) => {
-    navigator.clipboard.writeText(text).catch(() => {});
-    setCopied(key);
-    setTimeout(() => setCopied(null), 2000);
-  };
-  return [copied, copy];
-}
-
 // ── Step indicators ────────────────────────────────────────────────────────
 
-const STEPS = ['Тип бизнеса', 'Идентификаторы', 'Первое событие'];
+const STEPS = ['Тип бизнеса', 'Первое событие'];
 
 function StepsBar({ current }: { current: number }) {
   const pct = Math.round(((current + 1) / STEPS.length) * 100);
@@ -115,7 +97,7 @@ function StepsBar({ current }: { current: number }) {
 // ══════════════════════════════════════════════════════════════════════════════
 
 interface Step1Props {
-  onNext: (type: BusinessType) => void;
+  onNext: () => void;
 }
 
 function Step1({ onNext }: Step1Props) {
@@ -128,8 +110,8 @@ function Step1({ onNext }: Step1Props) {
     setSaving(true);
     setError('');
     try {
-      await client.put('/admin/tenant/config', TERMINOLOGY[selected]);
-      onNext(selected);
+      await client.put('/admin/config', TERMINOLOGY[selected]);
+      onNext();
     } catch {
       setError('Не удалось сохранить тип бизнеса. Попробуйте ещё раз.');
     } finally {
@@ -211,138 +193,14 @@ function Step1({ onNext }: Step1Props) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// Step 2 — Identifiers
+// Step 2 — First event
 // ══════════════════════════════════════════════════════════════════════════════
 
 interface Step2Props {
-  onNext: () => void;
-}
-
-function Step2({ onNext }: Step2Props) {
-  const [slug, setSlug] = useState<string | null>(null);
-  const [loadingSlug, setLoadingSlug] = useState(true);
-  const [copied, copy] = useCopy();
-
-  // Fetch slug on mount
-  useEffect(() => {
-    client
-      .get('/admin/tenant')
-      .then((r) => setSlug(r.data.slug))
-      .catch(() => setSlug('your-org'))
-      .finally(() => setLoadingSlug(false));
-  }, []);
-
-  const orgSlug = slug ?? 'your-org';
-
-  const widgetContent = `<div id="soldo-widget"></div>
-<script src="https://ваш-домен/widget.js"
-  data-tenant="${orgSlug}">
-</script>`;
-
-  return (
-    <div>
-      <h5 className="mb-1" style={{ fontWeight: 700, color: '#1e3a5f' }}>
-        Ваши идентификаторы
-      </h5>
-      <p style={{ color: '#6c757d', fontSize: '0.9rem' }} className="mb-4">
-        Используйте эти данные при настройке виджета
-      </p>
-
-      {loadingSlug ? (
-        <div className="text-center mb-4">
-          <Spinner size="sm" /> Загружаем данные…
-        </div>
-      ) : (
-        <>
-          {/* Card 1 — Slug */}
-          <div
-            className="mb-3 p-3"
-            style={{ border: '1px solid #dee2e6', borderRadius: 8 }}
-          >
-            <div style={{ fontWeight: 600, marginBottom: 8, fontSize: '0.9rem' }}>
-              Slug организации
-            </div>
-            <div className="d-flex align-items-center gap-2">
-              <code
-                style={{
-                  flex: 1,
-                  background: '#f8f9fa',
-                  padding: '8px 12px',
-                  borderRadius: 6,
-                  border: '1px solid #dee2e6',
-                  fontSize: '0.9rem',
-                  fontFamily: 'monospace',
-                }}
-              >
-                {orgSlug}
-              </code>
-              <Button
-                variant="outline-secondary"
-                size="sm"
-                onClick={() => copy('slug', orgSlug)}
-                style={{ minWidth: 40 }}
-              >
-                {copied === 'slug' ? '✓' : '📋'}
-              </Button>
-            </div>
-            <small style={{ color: '#6c757d' }}>
-              Постоянный идентификатор. Используйте в виджете.
-            </small>
-          </div>
-
-          {/* Card 2 — Widget */}
-          <div
-            className="mb-4 p-3"
-            style={{ border: '1px solid #dee2e6', borderRadius: 8 }}
-          >
-            <div style={{ fontWeight: 600, marginBottom: 8, fontSize: '0.9rem' }}>
-              {'</>'} Виджет для сайта
-            </div>
-            <div style={{ position: 'relative' }}>
-              <pre
-                style={{
-                  background: '#f8f9fa',
-                  padding: '12px',
-                  borderRadius: 6,
-                  border: '1px solid #dee2e6',
-                  fontSize: '0.8rem',
-                  fontFamily: 'monospace',
-                  margin: 0,
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-all',
-                }}
-              >
-                {widgetContent}
-              </pre>
-              <Button
-                variant="outline-secondary"
-                size="sm"
-                onClick={() => copy('widget', widgetContent)}
-                style={{ position: 'absolute', bottom: 8, right: 8, minWidth: 40 }}
-              >
-                {copied === 'widget' ? '✓' : '📋'}
-              </Button>
-            </div>
-          </div>
-        </>
-      )}
-
-      <Button variant="primary" onClick={onNext} className="w-100">
-        Далее →
-      </Button>
-    </div>
-  );
-}
-
-// ══════════════════════════════════════════════════════════════════════════════
-// Step 3 — First event
-// ══════════════════════════════════════════════════════════════════════════════
-
-interface Step3Props {
   onSkip: () => void;
 }
 
-function Step3({ onSkip }: Step3Props) {
+function Step2({ onSkip }: Step2Props) {
   const [categoryName, setCategoryName] = useState('');
   const [eventTitle, setEventTitle] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -357,13 +215,11 @@ function Step3({ onSkip }: Step3Props) {
     setSaving(true);
     setError('');
     try {
-      // 1. Create category
       const category = await categoryApi.create({
         name: categoryName,
         format: 'DEFAULT',
       });
 
-      // 2. Create event using categoryId via title/description approach
       await eventApi.create({
         title: eventTitle,
         description: '',
@@ -515,10 +371,7 @@ export default function OnboardingPage() {
           <Step1 onNext={() => setStep(1)} />
         )}
         {step === 1 && (
-          <Step2 onNext={() => setStep(2)} />
-        )}
-        {step === 2 && (
-          <Step3 onSkip={() => navigate('/admin')} />
+          <Step2 onSkip={() => navigate('/admin')} />
         )}
       </div>
     </div>

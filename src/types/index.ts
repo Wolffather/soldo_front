@@ -242,26 +242,26 @@ export interface InquiryForm {
   message: string;
 }
 
-// ── Tenant ──
+// ── App Config ──
 
-export interface TenantInfo {
-  id: number;
-  slug: string;
+export interface AppConfig {
   name: string;
   domain?: string;
-  status: string;
   eventLabel: string;
   participantLabel: string;
   bookingLabel: string;
 }
 
-export interface TenantConfigUpdateRequest {
-  eventLabel: string;
-  participantLabel: string;
-  bookingLabel: string;
+export interface AppConfigUpdateRequest {
   name?: string;
   domain?: string;
+  eventLabel?: string;
+  participantLabel?: string;
+  bookingLabel?: string;
 }
+
+export type TenantInfo = AppConfig;
+export type TenantConfigUpdateRequest = AppConfigUpdateRequest;
 
 // ── Widget ──
 
@@ -277,8 +277,6 @@ export interface WidgetConfig {
   customCss?: string;
   categoryStepTitle: string;
   buttonLabel: string;
-  tenantSlug: string;
-  tenantName: string;
 }
 
 export interface WidgetConfigUpdateRequest {

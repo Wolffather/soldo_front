@@ -107,7 +107,7 @@ export default function WidgetSettings() {
     }
   };
 
-  const embedSnippet = `<div id="soldo-widget"></div>\n<script src="https://ВАШ_ДОМЕН/widget.js" data-tenant="${config?.tenantSlug ?? ''}"></script>`;
+  const embedSnippet = `<div id="soldo-widget"></div>\n<script src="https://ВАШ_ДОМЕН/widget.js"></script>`;
 
   const handleCopy = async () => {
     try {

@@ -11,7 +11,6 @@ import EventForm from './pages/EventForm';
 import Bookings from './pages/Bookings';
 import Categories from './pages/Categories';
 import DocumentTemplates from './pages/DocumentTemplates';
-import Users from './pages/Users';
 import Inquiries from './pages/Inquiries';
 import NotificationSettings from './pages/NotificationSettings';
 import WidgetSettings from './pages/WidgetSettings';
@@ -52,7 +51,6 @@ export default function App() {
 <Route path="bookings" element={<Bookings />} />
         <Route path="categories" element={<Categories />} />
         <Route path="documents" element={<DocumentTemplates />} />
-        <Route path="users" element={<Users />} />
         <Route path="inquiries" element={<Inquiries />} />
         <Route path="notifications" element={<NotificationSettings />} />
         <Route path="widget" element={<WidgetSettings />} />

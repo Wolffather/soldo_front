@@ -5,7 +5,6 @@ import {
   BsSpeedometer2,
   BsCalendarEvent,
   BsBookmark,
-  BsPeople,
   BsBoxArrowRight,
   BsTagsFill,
   BsFileEarmarkText,
@@ -17,7 +16,7 @@ import {
   BsCodeSlash,
 } from 'react-icons/bs';
 import { useAuth } from '../auth/AuthContext';
-import { tenantApi } from '../api/tenantApi';
+import { appConfigApi } from '../api/tenantApi';
 
 const CATALOG_PATHS = ['/admin/events', '/admin/categories', '/admin/notifications'];
 
@@ -28,16 +27,15 @@ export default function Sidebar() {
 
   const isCatalogActive = CATALOG_PATHS.some(p => location.pathname.startsWith(p));
   const [catalogOpen, setCatalogOpen] = useState(isCatalogActive);
-
-  const [tenantName, setTenantName] = useState<string>('');
+  const [orgName, setOrgName] = useState<string>('');
 
   useEffect(() => {
-    tenantApi.getCurrent()
-      .then(info => setTenantName(info.name))
-      .catch(() => setTenantName(''));
+    appConfigApi.get()
+      .then(cfg => setOrgName(cfg.name))
+      .catch(() => setOrgName(''));
   }, []);
 
-  const headerTitle = tenantName ? `${tenantName} — Админ` : 'Soldo — Админ';
+  const headerTitle = orgName ? `${orgName} — Админ` : 'Админ';
 
   const handleLogout = () => {
     logout();
@@ -63,7 +61,6 @@ export default function Sidebar() {
       </h5>
 
       <Nav className="flex-column flex-grow-1">
-        {/* Дашборд */}
         <Nav.Item>
           <NavLink to="/admin" end className={navLinkClass}>
             <BsSpeedometer2 />
@@ -71,7 +68,6 @@ export default function Sidebar() {
           </NavLink>
         </Nav.Item>
 
-        {/* Бронирования */}
         <Nav.Item>
           <NavLink to="/admin/bookings" className={navLinkClass}>
             <BsBookmark />
@@ -79,7 +75,6 @@ export default function Sidebar() {
           </NavLink>
         </Nav.Item>
 
-        {/* Обратная связь */}
         <Nav.Item>
           <NavLink to="/admin/inquiries" className={navLinkClass}>
             <BsEnvelopeFill />
@@ -87,7 +82,6 @@ export default function Sidebar() {
           </NavLink>
         </Nav.Item>
 
-        {/* Документы */}
         <Nav.Item>
           <NavLink to="/admin/documents" className={navLinkClass}>
             <BsFileEarmarkText />
@@ -95,15 +89,6 @@ export default function Sidebar() {
           </NavLink>
         </Nav.Item>
 
-        {/* Пользователи */}
-        <Nav.Item>
-          <NavLink to="/admin/users" className={navLinkClass}>
-            <BsPeople />
-            Пользователи
-          </NavLink>
-        </Nav.Item>
-
-        {/* Dropdown: Контент */}
         <Nav.Item>
           <button
             onClick={() => setCatalogOpen(o => !o)}
@@ -120,11 +105,7 @@ export default function Sidebar() {
           {catalogOpen && (
             <div className="ms-3 border-start border-secondary ps-2 mb-1">
               {catalogLinks.map(link => (
-                <NavLink
-                  key={link.to}
-                  to={link.to}
-                  className={navLinkClass}
-                >
+                <NavLink key={link.to} to={link.to} className={navLinkClass}>
                   {link.icon}
                   {link.label}
                 </NavLink>
@@ -133,7 +114,6 @@ export default function Sidebar() {
           )}
         </Nav.Item>
 
-        {/* Виджет */}
         <Nav.Item>
           <NavLink to="/admin/widget" className={navLinkClass}>
             <BsCodeSlash />

@@ -1,72 +1,25 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Form, Button, Alert, Spinner } from 'react-bootstrap';
 import { onboardingApi } from '../api/onboardingApi';
 import { STORAGE_KEYS } from '../constants/storageKeys';
 
-type SlugStatus = null | 'checking' | 'available' | 'taken';
-
 export default function RegisterPage() {
   const [orgName, setOrgName] = useState('');
-  const [slug, setSlug] = useState('');
   const [adminName, setAdminName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
-  const [slugStatus, setSlugStatus] = useState<SlugStatus>(null);
-  const [suggestedSlug, setSuggestedSlug] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const orgDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const slugDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const navigate = useNavigate();
-
-  const handleOrgNameChange = useCallback((value: string) => {
-    setOrgName(value);
-    if (orgDebounceRef.current) clearTimeout(orgDebounceRef.current);
-    if (!value.trim()) return;
-    orgDebounceRef.current = setTimeout(async () => {
-      try {
-        const res = await onboardingApi.generateSlug(value);
-        setSlug(res.slug);
-        // Also check availability of generated slug
-        setSlugStatus('checking');
-        const check = await onboardingApi.checkSlug(res.slug);
-        setSlugStatus(check.available ? 'available' : 'taken');
-        if (!check.available) setSuggestedSlug(check.suggested);
-      } catch {
-        // ignore
-      }
-    }, 400);
-  }, []);
-
-  const handleSlugChange = useCallback((value: string) => {
-    setSlug(value);
-    setSlugStatus(null);
-    if (slugDebounceRef.current) clearTimeout(slugDebounceRef.current);
-    if (!value.trim()) return;
-    setSlugStatus('checking');
-    slugDebounceRef.current = setTimeout(async () => {
-      try {
-        const res = await onboardingApi.checkSlug(value);
-        setSlugStatus(res.available ? 'available' : 'taken');
-        if (!res.available) setSuggestedSlug(res.suggested);
-      } catch {
-        setSlugStatus(null);
-      }
-    }, 500);
-  }, []);
 
   const isSubmitDisabled =
     loading ||
     !orgName.trim() ||
-    !slug.trim() ||
     !adminName.trim() ||
     !email.trim() ||
-    !password.trim() ||
-    slugStatus !== 'available';
+    !password.trim();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -76,7 +29,6 @@ export default function RegisterPage() {
     try {
       const res = await onboardingApi.register({
         orgName,
-        slug,
         adminName,
         email,
         password,
@@ -91,47 +43,6 @@ export default function RegisterPage() {
       );
     } finally {
       setLoading(false);
-    }
-  };
-
-  const renderSlugStatus = () => {
-    if (!slug) return null;
-    switch (slugStatus) {
-      case 'checking':
-        return (
-          <Form.Text style={{ color: '#6c757d' }}>
-            <Spinner size="sm" style={{ width: '12px', height: '12px', marginRight: 4 }} />
-            Проверяем…
-          </Form.Text>
-        );
-      case 'available':
-        return (
-          <Form.Text style={{ color: '#198754' }}>
-            Свободен ✓
-          </Form.Text>
-        );
-      case 'taken':
-        return (
-          <Form.Text style={{ color: '#dc3545' }}>
-            Занят.{' '}
-            {suggestedSlug && (
-              <>
-                Попробуйте:{' '}
-                <span
-                  style={{ cursor: 'pointer', textDecoration: 'underline', color: '#2d6a9f' }}
-                  onClick={() => {
-                    setSlug(suggestedSlug);
-                    handleSlugChange(suggestedSlug);
-                  }}
-                >
-                  {suggestedSlug}
-                </span>
-              </>
-            )}
-          </Form.Text>
-        );
-      default:
-        return null;
     }
   };
 
@@ -169,27 +80,11 @@ export default function RegisterPage() {
             <Form.Control
               type="text"
               value={orgName}
-              onChange={(e) => handleOrgNameChange(e.target.value)}
+              onChange={(e) => setOrgName(e.target.value)}
               required
               autoFocus
               placeholder="Лагерь «Берёзка»"
             />
-          </Form.Group>
-
-          <Form.Group className="mb-3">
-            <Form.Label>Slug</Form.Label>
-            <Form.Control
-              type="text"
-              value={slug}
-              onChange={(e) => handleSlugChange(e.target.value)}
-              required
-              style={{ fontFamily: 'monospace' }}
-              placeholder="my-org"
-            />
-            <Form.Text style={{ color: '#6c757d', display: 'block' }}>
-              Только a-z, 0-9 и дефис
-            </Form.Text>
-            {renderSlugStatus()}
           </Form.Group>
 
           <Form.Group className="mb-3">

@@ -6,23 +6,23 @@ import {
 import { Link } from 'react-router-dom';
 import {
   BsCalendarEvent, BsBookmark, BsCashCoin, BsExclamationTriangle,
-  BsGear, BsCheckCircle, BsClipboard, BsClipboardCheck,
+  BsGear, BsCheckCircle,
 } from 'react-icons/bs';
 import { bookingApi } from '../api/bookingApi';
 import { eventApi } from '../api/eventApi';
-import { tenantApi } from '../api/tenantApi';
-import type { BookingSummary, Event, Page, TenantInfo, TenantConfigUpdateRequest } from '../types';
+import { appConfigApi } from '../api/tenantApi';
+import type { BookingSummary, Event, Page, AppConfig, AppConfigUpdateRequest } from '../types';
 import { formatDate } from '../utils/format';
 
 export default function Dashboard() {
   const [summaries, setSummaries] = useState<BookingSummary[]>([]);
   const [eventPage, setEventPage] = useState<Page<Event> | null>(null);
   const [monthlyRevenue, setMonthlyRevenue] = useState<number | null>(null);
-  const [tenant, setTenant] = useState<TenantInfo | null>(null);
+  const [config, setConfig] = useState<AppConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const [form, setForm] = useState<TenantConfigUpdateRequest>({
+  const [form, setForm] = useState<AppConfigUpdateRequest>({
     eventLabel: 'Событие',
     participantLabel: 'Участник',
     bookingLabel: 'Бронирование',
@@ -32,7 +32,6 @@ export default function Dashboard() {
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState('');
-  const [slugCopied, setSlugCopied] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -40,22 +39,22 @@ export default function Dashboard() {
 
   const loadData = async () => {
     try {
-      const [summaryData, eventsData, revenue, tenantData] = await Promise.all([
+      const [summaryData, eventsData, revenue, configData] = await Promise.all([
         bookingApi.getAllSummaries(),
         eventApi.getAll(0, 5),
         bookingApi.getMonthlyRevenue(),
-        tenantApi.getCurrent(),
+        appConfigApi.get(),
       ]);
       setSummaries(summaryData);
       setEventPage(eventsData);
       setMonthlyRevenue(revenue);
-      setTenant(tenantData);
+      setConfig(configData);
       setForm({
-        eventLabel: tenantData.eventLabel,
-        participantLabel: tenantData.participantLabel,
-        bookingLabel: tenantData.bookingLabel,
-        name: tenantData.name,
-        domain: tenantData.domain ?? '',
+        eventLabel: configData.eventLabel,
+        participantLabel: configData.participantLabel,
+        bookingLabel: configData.bookingLabel,
+        name: configData.name,
+        domain: configData.domain ?? '',
       });
     } catch (err) {
       console.error('Dashboard error:', err);
@@ -70,8 +69,8 @@ export default function Dashboard() {
     setSaveSuccess(false);
     setSaveError('');
     try {
-      const updated = await tenantApi.updateConfig(form);
-      setTenant(updated);
+      const updated = await appConfigApi.update(form);
+      setConfig(updated);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch {
@@ -260,27 +259,6 @@ export default function Dashboard() {
               )}
               <Row className="g-3">
                 <Col md={6}>
-                  <Form.Label className="small text-muted mb-1">Slug</Form.Label>
-                  <div className="input-group input-group-sm">
-                    <Form.Control
-                      value={tenant?.slug ?? ''}
-                      readOnly
-                      style={{ fontFamily: 'monospace', background: '#f8f9fa' }}
-                    />
-                    <Button
-                      variant="outline-secondary"
-                      size="sm"
-                      onClick={() => {
-                        navigator.clipboard.writeText(tenant?.slug ?? '');
-                        setSlugCopied(true);
-                        setTimeout(() => setSlugCopied(false), 2000);
-                      }}
-                    >
-                      {slugCopied ? <BsClipboardCheck className="text-success" /> : <BsClipboard />}
-                    </Button>
-                  </div>
-                </Col>
-                <Col md={6}>
                   <Form.Label className="small text-muted mb-1">Название</Form.Label>
                   <Form.Control
                     size="sm"
@@ -290,7 +268,7 @@ export default function Dashboard() {
                   />
                 </Col>
                 <Col md={6}>
-                  <Form.Label className="small text-muted mb-1">Кастомный домен</Form.Label>
+                  <Form.Label className="small text-muted mb-1">Домен</Form.Label>
                   <Form.Control
                     size="sm"
                     value={form.domain ?? ''}
@@ -305,7 +283,7 @@ export default function Dashboard() {
                       <Form.Control
                         size="sm"
                         placeholder="Событие"
-                        value={form.eventLabel}
+                        value={form.eventLabel ?? ''}
                         onChange={e => setForm(f => ({ ...f, eventLabel: e.target.value }))}
                       />
                       <Form.Text className="text-muted">Событие</Form.Text>
@@ -314,7 +292,7 @@ export default function Dashboard() {
                       <Form.Control
                         size="sm"
                         placeholder="Участник"
-                        value={form.participantLabel}
+                        value={form.participantLabel ?? ''}
                         onChange={e => setForm(f => ({ ...f, participantLabel: e.target.value }))}
                       />
                       <Form.Text className="text-muted">Участник</Form.Text>
@@ -323,7 +301,7 @@ export default function Dashboard() {
                       <Form.Control
                         size="sm"
                         placeholder="Бронирование"
-                        value={form.bookingLabel}
+                        value={form.bookingLabel ?? ''}
                         onChange={e => setForm(f => ({ ...f, bookingLabel: e.target.value }))}
                       />
                       <Form.Text className="text-muted">Бронирование</Form.Text>
