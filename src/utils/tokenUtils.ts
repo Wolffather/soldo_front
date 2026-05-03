@@ -3,7 +3,6 @@ import { STORAGE_KEYS } from '../constants/storageKeys';
 /** Decodes JWT payload and returns `exp` in milliseconds, or null if malformed */
 export function getTokenExpMs(token: string): number | null {
   try {
-    // убираем Bearer prefix если есть
     const raw = token.startsWith('Bearer ') ? token.slice(7) : token;
     const payload = raw.split('.')[1];
     const decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
@@ -28,6 +27,4 @@ export function clearAllTokens(): void {
   localStorage.removeItem(STORAGE_KEYS.ADMIN_TOKEN);
   localStorage.removeItem(STORAGE_KEYS.ADMIN_ROLE);
   localStorage.removeItem(STORAGE_KEYS.ADMIN_USER_ID);
-  localStorage.removeItem(STORAGE_KEYS.USER_TOKEN);
-  localStorage.removeItem(STORAGE_KEYS.USER_ROLE);
 }

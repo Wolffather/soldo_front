@@ -12,7 +12,6 @@ import Bookings from './pages/Bookings';
 import Categories from './pages/Categories';
 import DocumentTemplates from './pages/DocumentTemplates';
 import Inquiries from './pages/Inquiries';
-import NotificationSettings from './pages/NotificationSettings';
 import WidgetSettings from './pages/WidgetSettings';
 import NotFound from './pages/NotFound';
 
@@ -52,7 +51,6 @@ export default function App() {
         <Route path="categories" element={<Categories />} />
         <Route path="documents" element={<DocumentTemplates />} />
         <Route path="inquiries" element={<Inquiries />} />
-        <Route path="notifications" element={<NotificationSettings />} />
         <Route path="widget" element={<WidgetSettings />} />
       </Route>
 

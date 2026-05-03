@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { AuthProvider } from './auth/AuthContext';
-import { UserAuthProvider } from './context/UserAuthContext';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 
@@ -11,9 +10,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <UserAuthProvider>
-          <App />
-        </UserAuthProvider>
+        <App />
       </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>

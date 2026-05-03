@@ -147,19 +147,6 @@ export interface ParticipantProfile {
   childDocumentNumber?: string;
 }
 
-// ── Notification ──
-
-export interface Notification {
-  id: number;
-  userId: number;
-  type: string;
-  message: string;
-  sent: boolean;
-  sentAt?: string;
-  scheduledAt?: string;
-  createdAt: string;
-}
-
 // ── Document Template ──
 
 export interface DocumentTemplate {

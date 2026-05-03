@@ -8,17 +8,17 @@ import {
   BsBoxArrowRight,
   BsTagsFill,
   BsFileEarmarkText,
-  BsBell,
   BsCollection,
   BsChevronDown,
   BsChevronUp,
   BsEnvelopeFill,
   BsCodeSlash,
 } from 'react-icons/bs';
+
 import { useAuth } from '../auth/AuthContext';
 import { appConfigApi } from '../api/tenantApi';
 
-const CATALOG_PATHS = ['/admin/events', '/admin/categories', '/admin/notifications'];
+const CATALOG_PATHS = ['/admin/events', '/admin/categories'];
 
 export default function Sidebar() {
   const { logout } = useAuth();
@@ -45,7 +45,6 @@ export default function Sidebar() {
   const catalogLinks = [
     { to: '/admin/events', icon: <BsCalendarEvent />, label: 'События' },
     { to: '/admin/categories', icon: <BsTagsFill />, label: 'Категории' },
-    { to: '/admin/notifications', icon: <BsBell />, label: 'Уведомления' },
   ];
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
