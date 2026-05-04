@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Nav } from 'react-bootstrap';
 import {
@@ -16,7 +16,6 @@ import {
 } from 'react-icons/bs';
 
 import { useAuth } from '../auth/AuthContext';
-import { appConfigApi } from '../api/tenantApi';
 
 const CATALOG_PATHS = ['/admin/events', '/admin/categories'];
 
@@ -27,15 +26,7 @@ export default function Sidebar() {
 
   const isCatalogActive = CATALOG_PATHS.some(p => location.pathname.startsWith(p));
   const [catalogOpen, setCatalogOpen] = useState(isCatalogActive);
-  const [orgName, setOrgName] = useState<string>('');
-
-  useEffect(() => {
-    appConfigApi.get()
-      .then(cfg => setOrgName(cfg.name))
-      .catch(() => setOrgName(''));
-  }, []);
-
-  const headerTitle = orgName ? `${orgName} — Админ` : 'Админ';
+  const headerTitle = 'Сольдо';
 
   const handleLogout = () => {
     logout();
