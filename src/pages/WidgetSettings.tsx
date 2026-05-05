@@ -273,7 +273,7 @@ export default function WidgetSettings() {
     }
   };
 
-  const embedSnippet = `<script src="https://ВАШ_ДОМЕН/widget.js" data-tenant="default"></script>`;
+  const embedSnippet = `<script src="https://ВАШ_ДОМЕН/widget.js"></script>`;
 
   const handleCopy = async () => {
     try {
