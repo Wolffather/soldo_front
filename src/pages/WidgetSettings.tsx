@@ -8,7 +8,7 @@ import {
 import { widgetApi } from '../api/widgetApi';
 import type { WidgetConfig, WidgetConfigUpdateRequest } from '../types';
 
-// ── Inline ColorField component ──────────────────────────────────────────────
+// ── Color field ───────────────────────────────────────────────────────────────
 
 function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
@@ -33,6 +33,153 @@ function ColorField({ label, value, onChange }: { label: string; value: string; 
   );
 }
 
+// ── Presets ───────────────────────────────────────────────────────────────────
+
+interface Preset {
+  id: string;
+  name: string;
+  swatches: string[];
+  values: Partial<WidgetConfigUpdateRequest>;
+}
+
+const PRESETS: Preset[] = [
+  {
+    id: 'classic',
+    name: 'Классика',
+    swatches: ['#2563eb', '#ffffff', '#1f2937'],
+    values: {
+      primaryColor: '#2563eb',
+      backgroundColor: '#ffffff',
+      textColor: '#1f2937',
+      buttonTextColor: '#ffffff',
+      borderRadius: '8px',
+      fontFamily: 'inherit',
+    },
+  },
+  {
+    id: 'dark',
+    name: 'Тёмная',
+    swatches: ['#3b82f6', '#1e1e2e', '#e2e8f0'],
+    values: {
+      primaryColor: '#3b82f6',
+      backgroundColor: '#1e1e2e',
+      textColor: '#e2e8f0',
+      buttonTextColor: '#ffffff',
+      borderRadius: '10px',
+      fontFamily: 'inherit',
+    },
+  },
+  {
+    id: 'nature',
+    name: 'Природа',
+    swatches: ['#16a34a', '#f0fdf4', '#14532d'],
+    values: {
+      primaryColor: '#16a34a',
+      backgroundColor: '#f0fdf4',
+      textColor: '#14532d',
+      buttonTextColor: '#ffffff',
+      borderRadius: '12px',
+      fontFamily: 'inherit',
+    },
+  },
+  {
+    id: 'warm',
+    name: 'Тёплая',
+    swatches: ['#ea580c', '#fffbf5', '#431407'],
+    values: {
+      primaryColor: '#ea580c',
+      backgroundColor: '#fffbf5',
+      textColor: '#431407',
+      buttonTextColor: '#ffffff',
+      borderRadius: '6px',
+      fontFamily: 'inherit',
+    },
+  },
+  {
+    id: 'purple',
+    name: 'Фиолетовая',
+    swatches: ['#7c3aed', '#faf5ff', '#2e1065'],
+    values: {
+      primaryColor: '#7c3aed',
+      backgroundColor: '#faf5ff',
+      textColor: '#2e1065',
+      buttonTextColor: '#ffffff',
+      borderRadius: '8px',
+      fontFamily: 'inherit',
+    },
+  },
+  {
+    id: 'minimal',
+    name: 'Минимал',
+    swatches: ['#374151', '#f9fafb', '#111827'],
+    values: {
+      primaryColor: '#374151',
+      backgroundColor: '#f9fafb',
+      textColor: '#111827',
+      buttonTextColor: '#ffffff',
+      borderRadius: '4px',
+      fontFamily: 'inherit',
+    },
+  },
+];
+
+function PresetPicker({
+  activeId,
+  onSelect,
+}: {
+  activeId: string | null;
+  onSelect: (preset: Preset) => void;
+}) {
+  return (
+    <div className="mb-4">
+      <Form.Label className="d-block mb-2">Готовые темы</Form.Label>
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        {PRESETS.map(preset => {
+          const isActive = preset.id === activeId;
+          return (
+            <button
+              key={preset.id}
+              type="button"
+              onClick={() => onSelect(preset)}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 12px',
+                border: `2px solid ${isActive ? '#2563eb' : '#dee2e6'}`,
+                borderRadius: '8px',
+                background: isActive ? '#eff6ff' : '#fff',
+                cursor: 'pointer',
+                transition: 'border-color 0.15s, background 0.15s',
+                minWidth: '72px',
+              }}
+            >
+              <div style={{ display: 'flex', gap: '3px' }}>
+                {preset.swatches.map((color, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      width: '14px',
+                      height: '14px',
+                      borderRadius: '50%',
+                      background: color,
+                      border: '1px solid rgba(0,0,0,0.1)',
+                    }}
+                  />
+                ))}
+              </div>
+              <span style={{ fontSize: '0.75rem', fontWeight: isActive ? 600 : 400, color: isActive ? '#2563eb' : '#374151' }}>
+                {preset.name}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ── Default form state ────────────────────────────────────────────────────────
 
 const DEFAULT_FORM: WidgetConfigUpdateRequest = {
@@ -47,6 +194,16 @@ const DEFAULT_FORM: WidgetConfigUpdateRequest = {
   buttonLabel: 'Записаться',
 };
 
+function detectPreset(form: WidgetConfigUpdateRequest): string | null {
+  for (const preset of PRESETS) {
+    const match = Object.entries(preset.values).every(
+      ([k, v]) => form[k as keyof WidgetConfigUpdateRequest] === v
+    );
+    if (match) return preset.id;
+  }
+  return null;
+}
+
 // ── Page component ────────────────────────────────────────────────────────────
 
 export default function WidgetSettings() {
@@ -56,12 +213,10 @@ export default function WidgetSettings() {
   const [saveLoading, setSaveLoading] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [copied, setCopied] = useState(false);
-
   const [form, setForm] = useState<WidgetConfigUpdateRequest>(DEFAULT_FORM);
+  const [activePreset, setActivePreset] = useState<string | null>('classic');
 
-  useEffect(() => {
-    loadConfig();
-  }, []);
+  useEffect(() => { loadConfig(); }, []);
 
   const loadConfig = async () => {
     setLoading(true);
@@ -69,7 +224,7 @@ export default function WidgetSettings() {
     try {
       const data = await widgetApi.getConfig();
       setConfig(data);
-      setForm({
+      const loaded: WidgetConfigUpdateRequest = {
         primaryColor: data.primaryColor,
         backgroundColor: data.backgroundColor,
         textColor: data.textColor,
@@ -79,12 +234,27 @@ export default function WidgetSettings() {
         successMessage: data.successMessage,
         customCss: data.customCss ?? '',
         buttonLabel: data.buttonLabel ?? 'Записаться',
-      });
+      };
+      setForm(loaded);
+      setActivePreset(detectPreset(loaded));
     } catch {
       setError('Ошибка загрузки настроек виджета');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePreset = (preset: Preset) => {
+    setForm(f => ({ ...f, ...preset.values }));
+    setActivePreset(preset.id);
+  };
+
+  const handleField = (patch: Partial<WidgetConfigUpdateRequest>) => {
+    setForm(f => {
+      const next = { ...f, ...patch };
+      setActivePreset(detectPreset(next));
+      return next;
+    });
   };
 
   const handleSave = async () => {
@@ -103,25 +273,17 @@ export default function WidgetSettings() {
     }
   };
 
-  const embedSnippet = `<div id="soldo-widget"></div>\n<script src="https://ВАШ_ДОМЕН/widget.js"></script>`;
+  const embedSnippet = `<script src="https://ВАШ_ДОМЕН/widget.js" data-tenant="default"></script>`;
 
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(embedSnippet);
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
-    } catch {
-      // fallback: select textarea
-    }
+    } catch { /* ignore */ }
   };
 
-  if (loading) {
-    return (
-      <div className="text-center py-5">
-        <Spinner animation="border" />
-      </div>
-    );
-  }
+  if (loading) return <div className="text-center py-5"><Spinner animation="border" /></div>;
 
   return (
     <>
@@ -139,7 +301,7 @@ export default function WidgetSettings() {
 
       <Row className="g-4">
 
-        {/* ── Section 1: Appearance ── */}
+        {/* ── Appearance ── */}
         <Col lg={6}>
           <Card className="h-100">
             <Card.Header className="d-flex align-items-center gap-2">
@@ -147,33 +309,38 @@ export default function WidgetSettings() {
               <strong>Внешний вид</strong>
             </Card.Header>
             <Card.Body>
+              <PresetPicker activeId={activePreset} onSelect={handlePreset} />
+
+              <hr className="my-3" />
+              <p className="text-muted small mb-3">Настройте под себя</p>
+
               <Row className="g-0">
                 <Col md={6}>
                   <ColorField
                     label="Основной цвет"
                     value={form.primaryColor ?? '#2563eb'}
-                    onChange={v => setForm(f => ({ ...f, primaryColor: v }))}
+                    onChange={v => handleField({ primaryColor: v })}
                   />
                 </Col>
                 <Col md={6}>
                   <ColorField
                     label="Цвет фона"
                     value={form.backgroundColor ?? '#ffffff'}
-                    onChange={v => setForm(f => ({ ...f, backgroundColor: v }))}
+                    onChange={v => handleField({ backgroundColor: v })}
                   />
                 </Col>
                 <Col md={6}>
                   <ColorField
                     label="Цвет текста"
                     value={form.textColor ?? '#1f2937'}
-                    onChange={v => setForm(f => ({ ...f, textColor: v }))}
+                    onChange={v => handleField({ textColor: v })}
                   />
                 </Col>
                 <Col md={6}>
                   <ColorField
                     label="Цвет текста кнопки"
                     value={form.buttonTextColor ?? '#ffffff'}
-                    onChange={v => setForm(f => ({ ...f, buttonTextColor: v }))}
+                    onChange={v => handleField({ buttonTextColor: v })}
                   />
                 </Col>
               </Row>
@@ -185,7 +352,7 @@ export default function WidgetSettings() {
                     <Form.Control
                       type="text"
                       value={form.borderRadius ?? ''}
-                      onChange={e => setForm(f => ({ ...f, borderRadius: e.target.value }))}
+                      onChange={e => handleField({ borderRadius: e.target.value })}
                       placeholder="8px"
                       style={{ fontFamily: 'monospace' }}
                     />
@@ -198,7 +365,7 @@ export default function WidgetSettings() {
                     <Form.Control
                       type="text"
                       value={form.fontFamily ?? ''}
-                      onChange={e => setForm(f => ({ ...f, fontFamily: e.target.value }))}
+                      onChange={e => handleField({ fontFamily: e.target.value })}
                       placeholder="inherit"
                       style={{ fontFamily: 'monospace' }}
                     />
@@ -210,7 +377,7 @@ export default function WidgetSettings() {
           </Card>
         </Col>
 
-        {/* ── Section 4: Live Preview ── */}
+        {/* ── Preview ── */}
         <Col lg={6}>
           <Card className="h-100">
             <Card.Header className="d-flex align-items-center gap-2">
@@ -222,23 +389,20 @@ export default function WidgetSettings() {
                 style={{
                   border: '1px dashed #ccc',
                   padding: '16px',
-                  minHeight: '200px',
+                  minHeight: '240px',
                   background: form.backgroundColor ?? '#f9f9f9',
                   borderRadius: form.borderRadius ?? '8px',
                   fontFamily: form.fontFamily ?? 'inherit',
                   color: form.textColor ?? '#1f2937',
+                  transition: 'all 0.2s',
                 }}
               >
-                <p className="fw-semibold mb-3" style={{ color: form.textColor ?? '#1f2937' }}>
-                  Ближайшее событие
-                </p>
                 <div style={{
                   border: `2px solid ${form.primaryColor ?? '#2563eb'}`,
                   borderRadius: form.borderRadius ?? '8px',
                   padding: '16px',
                   marginBottom: '12px',
                   fontSize: '0.875rem',
-                  color: form.textColor ?? '#1f2937',
                 }}>
                   <span style={{
                     background: form.primaryColor ?? '#2563eb',
@@ -248,26 +412,42 @@ export default function WidgetSettings() {
                     fontSize: '0.7rem',
                     fontWeight: 600,
                     display: 'inline-block',
-                    marginBottom: '6px',
+                    marginBottom: '8px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.03em',
                   }}>Ближайшее</span>
-                  <div style={{ fontWeight: 700, marginBottom: 4 }}>Название события</div>
-                  <div style={{ opacity: 0.7, marginBottom: 8 }}>Краткое описание события...</div>
-                  <div style={{ fontWeight: 700, color: form.primaryColor ?? '#2563eb', marginBottom: 8 }}>5 000 ₽</div>
+                  <div style={{ fontWeight: 700, marginBottom: 4 }}>Летний лагерь 2026</div>
+                  <div style={{ opacity: 0.7, marginBottom: 8, fontSize: '0.8rem' }}>
+                    Незабываемое лето у моря с насыщенной программой
+                  </div>
+                  <div style={{ fontWeight: 700, color: form.primaryColor ?? '#2563eb', marginBottom: 12 }}>
+                    25 000 ₽
+                  </div>
+                  <button
+                    style={{
+                      background: form.primaryColor ?? '#2563eb',
+                      color: form.buttonTextColor ?? '#ffffff',
+                      border: 'none',
+                      borderRadius: form.borderRadius ?? '8px',
+                      padding: '8px 20px',
+                      cursor: 'default',
+                      fontWeight: 600,
+                      fontFamily: form.fontFamily ?? 'inherit',
+                      width: '100%',
+                      fontSize: '0.875rem',
+                    }}
+                  >
+                    {form.buttonLabel || 'Записаться'}
+                  </button>
                 </div>
-                <button
-                  style={{
-                    background: form.primaryColor ?? '#2563eb',
-                    color: form.buttonTextColor ?? '#ffffff',
-                    border: 'none',
-                    borderRadius: form.borderRadius ?? '8px',
-                    padding: '8px 24px',
-                    cursor: 'default',
-                    fontWeight: 600,
-                    fontFamily: form.fontFamily ?? 'inherit',
-                  }}
-                >
-                  {form.buttonLabel || 'Записаться'}
-                </button>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '6px' }}>
+                  {[0, 1, 2].map(i => (
+                    <div key={i} style={{
+                      width: '8px', height: '8px', borderRadius: '50%',
+                      background: i === 0 ? (form.primaryColor ?? '#2563eb') : '#d1d5db',
+                    }} />
+                  ))}
+                </div>
               </div>
               <p className="text-muted small mt-2 mb-0">
                 Визуальный макет — отображает выбранные цвета и стили
@@ -276,7 +456,7 @@ export default function WidgetSettings() {
           </Card>
         </Col>
 
-        {/* ── Section 2: Behavior ── */}
+        {/* ── Behavior ── */}
         <Col lg={6}>
           <Card>
             <Card.Header className="d-flex align-items-center gap-2">
@@ -315,7 +495,7 @@ export default function WidgetSettings() {
                   rows={6}
                   value={form.customCss ?? ''}
                   onChange={e => setForm(f => ({ ...f, customCss: e.target.value }))}
-                  placeholder=".soldo-widget { /* ваши стили */ }"
+                  placeholder={`[data-soldo-widget] .sw-event-card {\n  box-shadow: 0 4px 12px rgba(0,0,0,0.1);\n}`}
                   style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}
                 />
                 <Form.Text className="text-muted">
@@ -326,7 +506,7 @@ export default function WidgetSettings() {
           </Card>
         </Col>
 
-        {/* ── Section 3: Embed code ── */}
+        {/* ── Embed code ── */}
         <Col lg={6}>
           <Card>
             <Card.Header className="d-flex align-items-center gap-2">
@@ -335,12 +515,12 @@ export default function WidgetSettings() {
             </Card.Header>
             <Card.Body>
               <p className="text-muted small mb-2">
-                Вставьте этот код на страницу вашего сайта, где должен появиться виджет.
+                Вставьте этот тег на страницу сайта там, где должна появиться кнопка виджета.
                 Замените <code>ВАШ_ДОМЕН</code> на актуальный домен.
               </p>
               <Form.Control
                 as="textarea"
-                rows={4}
+                rows={3}
                 readOnly
                 value={embedSnippet}
                 style={{ fontFamily: 'monospace', fontSize: '0.82rem', background: '#f8f9fa' }}
@@ -360,7 +540,7 @@ export default function WidgetSettings() {
           </Card>
         </Col>
 
-        {/* ── Save button row ── */}
+        {/* ── Save ── */}
         <Col xs={12}>
           <div className="d-flex justify-content-end">
             <Button variant="primary" onClick={handleSave} disabled={saveLoading}>
