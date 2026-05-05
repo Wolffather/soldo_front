@@ -42,10 +42,8 @@ const DEFAULT_FORM: WidgetConfigUpdateRequest = {
   buttonTextColor: '#ffffff',
   borderRadius: '8px',
   fontFamily: 'inherit',
-  showCategoryStep: true,
   successMessage: 'Спасибо! Мы свяжемся с вами в ближайшее время.',
   customCss: '',
-  categoryStepTitle: 'Выберите направление',
   buttonLabel: 'Записаться',
 };
 
@@ -78,10 +76,8 @@ export default function WidgetSettings() {
         buttonTextColor: data.buttonTextColor,
         borderRadius: data.borderRadius,
         fontFamily: data.fontFamily,
-        showCategoryStep: data.showCategoryStep,
         successMessage: data.successMessage,
         customCss: data.customCss ?? '',
-        categoryStepTitle: data.categoryStepTitle ?? 'Выберите направление',
         buttonLabel: data.buttonLabel ?? 'Записаться',
       });
     } catch {
@@ -234,26 +230,29 @@ export default function WidgetSettings() {
                 }}
               >
                 <p className="fw-semibold mb-3" style={{ color: form.textColor ?? '#1f2937' }}>
-                  {form.categoryStepTitle || 'Выберите направление'}
+                  Ближайшее событие
                 </p>
-                <div className="d-flex flex-wrap gap-2 mb-3">
-                  {['Городские', 'Загородные', 'Творческие'].map(cat => (
-                    <button
-                      key={cat}
-                      style={{
-                        background: form.primaryColor ?? '#2563eb',
-                        color: form.buttonTextColor ?? '#ffffff',
-                        border: 'none',
-                        borderRadius: form.borderRadius ?? '8px',
-                        padding: '6px 14px',
-                        cursor: 'default',
-                        fontSize: '0.875rem',
-                        fontFamily: form.fontFamily ?? 'inherit',
-                      }}
-                    >
-                      {cat}
-                    </button>
-                  ))}
+                <div style={{
+                  border: `2px solid ${form.primaryColor ?? '#2563eb'}`,
+                  borderRadius: form.borderRadius ?? '8px',
+                  padding: '16px',
+                  marginBottom: '12px',
+                  fontSize: '0.875rem',
+                  color: form.textColor ?? '#1f2937',
+                }}>
+                  <span style={{
+                    background: form.primaryColor ?? '#2563eb',
+                    color: form.buttonTextColor ?? '#ffffff',
+                    borderRadius: '20px',
+                    padding: '2px 10px',
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                    display: 'inline-block',
+                    marginBottom: '6px',
+                  }}>Ближайшее</span>
+                  <div style={{ fontWeight: 700, marginBottom: 4 }}>Название события</div>
+                  <div style={{ opacity: 0.7, marginBottom: 8 }}>Краткое описание события...</div>
+                  <div style={{ fontWeight: 700, color: form.primaryColor ?? '#2563eb', marginBottom: 8 }}>5 000 ₽</div>
                 </div>
                 <button
                   style={{
@@ -286,16 +285,6 @@ export default function WidgetSettings() {
             </Card.Header>
             <Card.Body>
               <Form.Group className="mb-3">
-                <Form.Label>Заголовок шага категорий</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={form.categoryStepTitle ?? ''}
-                  onChange={e => setForm(f => ({ ...f, categoryStepTitle: e.target.value }))}
-                  placeholder="Выберите направление"
-                />
-              </Form.Group>
-
-              <Form.Group className="mb-3">
                 <Form.Label>Текст кнопки записи</Form.Label>
                 <Form.Control
                   type="text"
@@ -303,19 +292,6 @@ export default function WidgetSettings() {
                   onChange={e => setForm(f => ({ ...f, buttonLabel: e.target.value }))}
                   placeholder="Записаться"
                 />
-              </Form.Group>
-
-              <Form.Group className="mb-3">
-                <Form.Check
-                  type="switch"
-                  id="showCategoryStep"
-                  label="Показывать шаг выбора категории"
-                  checked={form.showCategoryStep ?? true}
-                  onChange={e => setForm(f => ({ ...f, showCategoryStep: e.target.checked }))}
-                />
-                <Form.Text className="text-muted">
-                  Если выключено, виджет сразу переходит к выбору события
-                </Form.Text>
               </Form.Group>
 
               <Form.Group className="mb-3">

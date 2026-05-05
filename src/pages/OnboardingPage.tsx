@@ -8,7 +8,6 @@ import {
   ProgressBar,
 } from 'react-bootstrap';
 import client from '../api/client';
-import { categoryApi } from '../api/categoryApi';
 import { eventApi } from '../api/eventApi';
 import type { BusinessType } from '../api/onboardingApi';
 
@@ -201,7 +200,6 @@ interface Step2Props {
 }
 
 function Step2({ onSkip }: Step2Props) {
-  const [categoryName, setCategoryName] = useState('');
   const [eventTitle, setEventTitle] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -215,15 +213,9 @@ function Step2({ onSkip }: Step2Props) {
     setSaving(true);
     setError('');
     try {
-      const category = await categoryApi.create({
-        name: categoryName,
-        format: 'DEFAULT',
-      });
-
       await eventApi.create({
         title: eventTitle,
         description: '',
-        categoryName: category.name,
         startDate: startDate || undefined,
         endDate: endDate || undefined,
         price: price,
@@ -249,17 +241,6 @@ function Step2({ onSkip }: Step2Props) {
       {error && <Alert variant="danger">{error}</Alert>}
 
       <Form onSubmit={handleSubmit}>
-        <Form.Group className="mb-3">
-          <Form.Label>Название категории</Form.Label>
-          <Form.Control
-            type="text"
-            value={categoryName}
-            onChange={(e) => setCategoryName(e.target.value)}
-            placeholder="Основное направление"
-            required
-          />
-        </Form.Group>
-
         <Form.Group className="mb-3">
           <Form.Label>Название события</Form.Label>
           <Form.Control
@@ -310,7 +291,7 @@ function Step2({ onSkip }: Step2Props) {
           type="submit"
           variant="primary"
           className="w-100 mb-2"
-          disabled={saving || !categoryName.trim() || !eventTitle.trim()}
+          disabled={saving || !eventTitle.trim()}
         >
           {saving ? <Spinner size="sm" /> : 'Создать и открыть панель'}
         </Button>

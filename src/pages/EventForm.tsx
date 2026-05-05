@@ -4,11 +4,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Card, Form, Button, Row, Col, Spinner, Alert } from 'react-bootstrap';
 import { BsArrowLeft } from 'react-icons/bs';
 import { eventApi } from '../api/eventApi';
-import { categoryApi } from '../api/categoryApi';
-import type { EventFormData, EventCategory } from '../types';
+import type { EventFormData } from '../types';
 import { EVENT_STATUSES } from '../constants/eventConstants';
 
-/** Field-level errors from backend */
 type FieldErrors = Record<string, string>;
 
 export default function EventForm() {
@@ -19,49 +17,23 @@ export default function EventForm() {
   const [form, setForm] = useState<EventFormData>({
     title: '',
     description: '',
-    categoryName: '',
     startDate: '',
     endDate: '',
     maxParticipants: 20,
     price: 0,
-    priceWithCertificate: undefined,
     gameMaster: '',
     status: 'PUBLISHED',
   });
 
-  const [categories, setCategories] = useState<EventCategory[]>([]);
-  const [selectedFormat, setSelectedFormat] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
-  const isOneTime = selectedFormat === 'ONE_TIME';
-
   useEffect(() => {
-    loadCategories();
-    if (isEdit) {
-      loadEvent(Number(id));
-    }
+    if (isEdit) loadEvent(Number(id));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
-
-  // When categories load, resolve format from category name
-  useEffect(() => {
-    if (form.categoryName && categories.length > 0) {
-      const cat = categories.find((c) => c.name === form.categoryName);
-      if (cat) setSelectedFormat(cat.format);
-    }
-  }, [categories]);
-
-  const loadCategories = async () => {
-    try {
-      const data = await categoryApi.getAll();
-      setCategories(data);
-    } catch {
-      console.error('Ошибка загрузки категорий');
-    }
-  };
 
   const loadEvent = async (eventId: number) => {
     setLoading(true);
@@ -70,12 +42,10 @@ export default function EventForm() {
       setForm({
         title: event.title,
         description: event.description ?? '',
-        categoryName: event.categoryName ?? '',
         startDate: event.startDate ?? '',
         endDate: event.endDate ?? '',
         maxParticipants: event.maxParticipants ?? 20,
         price: event.price ?? 0,
-        priceWithCertificate: event.priceWithCertificate,
         gameMaster: event.gameMaster ?? '',
         status: event.status ?? 'PUBLISHED',
       });
@@ -83,19 +53,6 @@ export default function EventForm() {
       setError('Ошибка загрузки события');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleCategoryChange = (catName: string) => {
-    handleChange('categoryName', catName);
-    const cat = categories.find((c) => c.name === catName);
-    const fmt = cat?.format ?? '';
-    setSelectedFormat(fmt);
-    if (fmt === 'ONE_TIME') {
-      handleChange('endDate', '');
-    }
-    if (fieldErrors.categoryName) {
-      setFieldErrors((prev) => { const n = { ...prev }; delete n.categoryName; return n; });
     }
   };
 
@@ -115,11 +72,10 @@ export default function EventForm() {
     const payload: EventFormData = {
       ...form,
       startDate: form.startDate || undefined,
-      endDate: isOneTime ? undefined : (form.endDate || undefined),
+      endDate: form.endDate || undefined,
       maxParticipants: form.maxParticipants || undefined,
       gameMaster: form.gameMaster || undefined,
       price: form.price || undefined,
-      priceWithCertificate: form.priceWithCertificate || undefined,
     };
 
     try {
@@ -145,10 +101,6 @@ export default function EventForm() {
     }
   };
 
-  const handleBack = () => {
-    navigate('/admin/events');
-  };
-
   if (loading) {
     return (
       <div className="text-center py-5">
@@ -157,15 +109,13 @@ export default function EventForm() {
     );
   }
 
-  const pageTitle = isEdit ? 'Редактировать событие' : 'Новое событие';
-
   return (
     <>
       <div className="d-flex align-items-center gap-3 mb-4">
-        <Button variant="outline-secondary" onClick={handleBack}>
+        <Button variant="outline-secondary" onClick={() => navigate('/admin/events')}>
           <BsArrowLeft />
         </Button>
-        <h4 className="mb-0">{pageTitle}</h4>
+        <h4 className="mb-0">{isEdit ? 'Редактировать событие' : 'Новое событие'}</h4>
       </div>
 
       {error && <Alert variant="danger">{error}</Alert>}
@@ -174,7 +124,7 @@ export default function EventForm() {
         <Card.Body>
           <Form onSubmit={handleSubmit}>
             <Row>
-              <Col md={6}>
+              <Col md={9}>
                 <Form.Group className="mb-3">
                   <Form.Label>Название *</Form.Label>
                   <Form.Control
@@ -187,24 +137,6 @@ export default function EventForm() {
                   />
                   {fieldErrors.title && (
                     <Form.Control.Feedback type="invalid">{fieldErrors.title}</Form.Control.Feedback>
-                  )}
-                </Form.Group>
-              </Col>
-              <Col md={3}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Категория</Form.Label>
-                  <Form.Select
-                    value={form.categoryName}
-                    onChange={(e) => handleCategoryChange(e.target.value)}
-                    isInvalid={!!fieldErrors.categoryName}
-                  >
-                    <option value="">— Без категории —</option>
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.name}>{cat.name}</option>
-                    ))}
-                  </Form.Select>
-                  {fieldErrors.categoryName && (
-                    <Form.Control.Feedback type="invalid">{fieldErrors.categoryName}</Form.Control.Feedback>
                   )}
                 </Form.Group>
               </Col>
@@ -248,24 +180,20 @@ export default function EventForm() {
                   )}
                 </Form.Group>
               </Col>
-
-              {!isOneTime && (
-                <Col md={3}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Дата окончания</Form.Label>
-                    <Form.Control
-                      type="date"
-                      value={form.endDate ?? ''}
-                      onChange={(e) => handleChange('endDate', e.target.value)}
-                      isInvalid={!!fieldErrors.endDate}
-                    />
-                    {fieldErrors.endDate && (
-                      <Form.Control.Feedback type="invalid">{fieldErrors.endDate}</Form.Control.Feedback>
-                    )}
-                  </Form.Group>
-                </Col>
-              )}
-
+              <Col md={3}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Дата окончания</Form.Label>
+                  <Form.Control
+                    type="date"
+                    value={form.endDate ?? ''}
+                    onChange={(e) => handleChange('endDate', e.target.value)}
+                    isInvalid={!!fieldErrors.endDate}
+                  />
+                  {fieldErrors.endDate && (
+                    <Form.Control.Feedback type="invalid">{fieldErrors.endDate}</Form.Control.Feedback>
+                  )}
+                </Form.Group>
+              </Col>
               <Col md={3}>
                 <Form.Group className="mb-3">
                   <Form.Label>Макс. участников</Form.Label>
@@ -281,7 +209,6 @@ export default function EventForm() {
                   )}
                 </Form.Group>
               </Col>
-
               <Col md={3}>
                 <Form.Group className="mb-3">
                   <Form.Label>Цена (₽)</Form.Label>
@@ -320,7 +247,7 @@ export default function EventForm() {
               <Button type="submit" variant="primary" disabled={saving}>
                 {saving ? <Spinner size="sm" /> : isEdit ? 'Сохранить' : 'Создать'}
               </Button>
-              <Button variant="secondary" onClick={handleBack}>
+              <Button variant="secondary" onClick={() => navigate('/admin/events')}>
                 Отмена
               </Button>
             </div>

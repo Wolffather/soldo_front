@@ -9,7 +9,6 @@ import Events from './pages/Events';
 import EventDetail from './pages/EventDetail';
 import EventForm from './pages/EventForm';
 import Bookings from './pages/Bookings';
-import Categories from './pages/Categories';
 import DocumentTemplates from './pages/DocumentTemplates';
 import Inquiries from './pages/Inquiries';
 import WidgetSettings from './pages/WidgetSettings';
@@ -48,7 +47,7 @@ export default function App() {
         <Route path="events/:id" element={<EventDetail />} />
         <Route path="events/:id/edit" element={<EventForm />} />
 <Route path="bookings" element={<Bookings />} />
-        <Route path="categories" element={<Categories />} />
+
         <Route path="documents" element={<DocumentTemplates />} />
         <Route path="inquiries" element={<Inquiries />} />
         <Route path="widget" element={<WidgetSettings />} />

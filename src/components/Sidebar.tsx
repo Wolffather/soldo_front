@@ -1,42 +1,25 @@
-import { useState } from 'react';
-import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { Nav } from 'react-bootstrap';
 import {
   BsSpeedometer2,
   BsCalendarEvent,
   BsBookmark,
   BsBoxArrowRight,
-  BsTagsFill,
   BsFileEarmarkText,
-  BsCollection,
-  BsChevronDown,
-  BsChevronUp,
   BsEnvelopeFill,
   BsCodeSlash,
 } from 'react-icons/bs';
 
 import { useAuth } from '../auth/AuthContext';
 
-const CATALOG_PATHS = ['/admin/events', '/admin/categories'];
-
 export default function Sidebar() {
   const { logout } = useAuth();
-  const location = useLocation();
   const navigate = useNavigate();
-
-  const isCatalogActive = CATALOG_PATHS.some(p => location.pathname.startsWith(p));
-  const [catalogOpen, setCatalogOpen] = useState(isCatalogActive);
-  const headerTitle = 'Сольдо';
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
-
-  const catalogLinks = [
-    { to: '/admin/events', icon: <BsCalendarEvent />, label: 'События' },
-    { to: '/admin/categories', icon: <BsTagsFill />, label: 'Категории' },
-  ];
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     `nav-link text-white d-flex align-items-center gap-2 rounded mb-1 ${isActive ? 'bg-primary' : 'hover-bg-secondary'}`;
@@ -46,9 +29,7 @@ export default function Sidebar() {
       className="d-flex flex-column bg-dark text-white p-3"
       style={{ width: '240px', minHeight: '100vh' }}
     >
-      <h5 className="text-center mb-4">
-        {headerTitle}
-      </h5>
+      <h5 className="text-center mb-4">Сольдо</h5>
 
       <Nav className="flex-column flex-grow-1">
         <Nav.Item>
@@ -80,28 +61,10 @@ export default function Sidebar() {
         </Nav.Item>
 
         <Nav.Item>
-          <button
-            onClick={() => setCatalogOpen(o => !o)}
-            className={`nav-link text-white d-flex align-items-center gap-2 rounded mb-1 w-100 border-0 bg-transparent ${
-              isCatalogActive && !catalogOpen ? 'bg-primary' : ''
-            }`}
-            style={{ cursor: 'pointer', textAlign: 'left' }}
-          >
-            <BsCollection />
-            <span className="flex-grow-1">Контент</span>
-            {catalogOpen ? <BsChevronUp size={12} /> : <BsChevronDown size={12} />}
-          </button>
-
-          {catalogOpen && (
-            <div className="ms-3 border-start border-secondary ps-2 mb-1">
-              {catalogLinks.map(link => (
-                <NavLink key={link.to} to={link.to} className={navLinkClass}>
-                  {link.icon}
-                  {link.label}
-                </NavLink>
-              ))}
-            </div>
-          )}
+          <NavLink to="/admin/events" className={navLinkClass}>
+            <BsCalendarEvent />
+            События
+          </NavLink>
         </Nav.Item>
 
         <Nav.Item>

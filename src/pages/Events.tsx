@@ -69,7 +69,6 @@ export default function Events() {
               <tr>
                 <th>ID</th>
                 <th>Название</th>
-                <th>Тип</th>
                 <th>Дата начала</th>
                 <th>Дата окончания</th>
                 <th className="text-center">Макс. участников</th>
@@ -84,9 +83,6 @@ export default function Events() {
                     <Link to={`/admin/events/${event.id}`} className="fw-semibold">
                       {event.title}
                     </Link>
-                  </td>
-                  <td>
-                    <span className="badge bg-secondary">{event.categoryName ?? '—'}</span>
                   </td>
                   <td>{formatDate(event.startDate)}</td>
                   <td>{event.endDate ? formatDate(event.endDate) : '—'}</td>
