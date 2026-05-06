@@ -1,70 +1,25 @@
-// ── Auth ──
-
-export interface LoginRequest {
-  username: string;
-  password: string;
-}
-
-export interface TokenResponse {
-  token: string;
-  role: string;
-  userId: number;
-}
-
-// ── User ──
-
-export interface User {
-  id: number;
-  firstName?: string;
-  lastName?: string;
-  username?: string;
-  role: string;
-  birthDate?: string;
-  phone?: string;
-  email?: string;
-  createdAt: string;
-}
-
-// ── Event Category ──
-
-export interface EventCategory {
-  id: number;
-  name: string;
-  format: string;
-  description?: string;
-  iconUrl?: string;
-}
-
 // ── Event ──
 
 export interface Event {
   id: number;
   title: string;
   description?: string;
-  categoryId?: number;
-  categoryName?: string;
   startDate?: string;
   endDate?: string;
   maxParticipants?: number;
   price?: number;
-  /** Цена при наличии сертификата ПФДО. Только для SESSION_OUTDOOR событий. */
-  priceWithCertificate?: number;
   status?: string;
   createdAt: string;
-  /** Available spots, computed from summary */
   availableSpots?: number;
 }
 
 export interface EventFormData {
   title: string;
   description: string;
-  categoryName?: string;
   startDate?: string;
   endDate?: string;
   maxParticipants?: number;
   price?: number;
-  /** Цена при наличии сертификата ПФДО. Только для SESSION_OUTDOOR событий. */
-  priceWithCertificate?: number;
   status?: string;
 }
 
@@ -72,12 +27,9 @@ export interface EventFormData {
 
 export interface Booking {
   id: number;
-  userId?: number;
   eventId: number;
   status: BookingStatus;
-  userName?: string;
   eventTitle?: string;
-  categoryFormat?: string;
   paymentStatus?: string;
   amountDue?: number;
   amountPaid?: number;
@@ -93,6 +45,7 @@ export interface Booking {
   documentTotal?: number;
   documentSigned?: number;
   documentRequireSignature?: number;
+  notes?: string;
 }
 
 export interface AdminBookingRequest {
@@ -117,32 +70,6 @@ export interface BookingSummary {
   pendingBookings: number;
   cancelledBookings: number;
   availableSeats: number;
-}
-
-// ── Participant Profile ──
-
-export interface ParticipantProfile {
-  id: number;
-  userId: number;
-  fullName: string;
-  birthDate?: string;
-  medicalNotes?: string;
-  parentFullName: string;
-  parentPhone: string;
-  parentEmail?: string;
-  consentPersonalData: boolean;
-  consentPhotoVideo: boolean;
-  // ── Паспортные данные родителя ──────────────────────────────────────────
-  parentBirthDate?: string;
-  parentPassportSeries?: string;
-  parentPassportNumber?: string;
-  parentPassportIssuedBy?: string;
-  parentPassportIssuedDate?: string;
-  registrationAddress?: string;
-  // ── Документ ребёнка ───────────────────────────────────────────────────
-  childDocumentType?: string;   // 'BIRTH_CERTIFICATE' | 'PASSPORT'
-  childDocumentSeries?: string;
-  childDocumentNumber?: string;
 }
 
 // ── Document Template ──
@@ -182,18 +109,6 @@ export interface BookingDocument {
   filledData?: string;
 }
 
-// ── Inquiry (Feedback form) ──
-
-export interface Inquiry {
-  id: number;
-  name: string;
-  phone?: string;
-  email?: string;
-  eventTitle?: string;
-  message?: string;
-  createdAt?: string;
-}
-
 // ── Pagination ──
 
 export interface Page<T> {
@@ -203,50 +118,6 @@ export interface Page<T> {
   number: number;
   size: number;
 }
-
-// ── Public Site ──
-
-export interface EventItem {
-  id: number;
-  title: string;
-  description?: string;
-  categoryName?: string;
-  startDate?: string;
-  endDate?: string;
-  maxParticipants?: number;
-  price?: number;
-  status?: string;
-  availableSpots?: number;
-}
-
-export interface InquiryForm {
-  name: string;
-  phone: string;
-  email: string;
-  eventTitle: string;
-  message: string;
-}
-
-// ── App Config ──
-
-export interface AppConfig {
-  name: string;
-  domain?: string;
-  eventLabel: string;
-  participantLabel: string;
-  bookingLabel: string;
-}
-
-export interface AppConfigUpdateRequest {
-  name?: string;
-  domain?: string;
-  eventLabel?: string;
-  participantLabel?: string;
-  bookingLabel?: string;
-}
-
-export type TenantInfo = AppConfig;
-export type TenantConfigUpdateRequest = AppConfigUpdateRequest;
 
 // ── Widget ──
 

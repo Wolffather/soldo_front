@@ -1,16 +1,15 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Card, Row, Col, Table, Button, Spinner, Alert, Badge,
   Modal, Form,
 } from 'react-bootstrap';
 import {
-  BsPencil, BsArrowLeft, BsCheckCircle, BsXCircle, BsCashCoin, BsPlusCircle,
+  BsPencil, BsArrowLeft, BsXCircle, BsCashCoin, BsPlusCircle,
 } from 'react-icons/bs';
 import { eventApi } from '../api/eventApi';
 import { bookingApi } from '../api/bookingApi';
 import type { Event, Booking, BookingSummary, AdminBookingRequest, BookingDocument } from '../types';
-import StatusBadge from '../components/StatusBadge';
 import { formatDate, formatDateTime } from '../utils/format';
 
 const paymentBadge: Record<string, { bg: string; label: string }> = {
@@ -86,18 +85,6 @@ export default function EventDetail() {
       setError('Ошибка загрузки события');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleConfirm = async (bookingId: number) => {
-    setActionLoading(bookingId);
-    try {
-      await bookingApi.confirm(bookingId);
-      loadData(Number(id));
-    } catch {
-      setError('Ошибка подтверждения');
-    } finally {
-      setActionLoading(null);
     }
   };
 
@@ -196,7 +183,6 @@ export default function EventDetail() {
             <BsArrowLeft />
           </Button>
           <h4 className="mb-0">{event.title}</h4>
-          {event.categoryName && <Badge bg="info">{event.categoryName}</Badge>}
           {event.price ? (
             <Badge bg="success">{Number(event.price).toLocaleString('ru-RU')} ₽</Badge>
           ) : (
@@ -228,15 +214,6 @@ export default function EventDetail() {
                       ? `${Number(event.price).toLocaleString('ru-RU')} ₽`
                       : 'Бесплатно'}
                   </p>
-                  {event.priceWithCertificate != null && (
-                    <p>
-                      <strong>Цена с сертификатом ПФДО:</strong>{' '}
-                      <span className="text-success fw-semibold">
-                        {Number(event.priceWithCertificate).toLocaleString('ru-RU')} ₽
-                      </span>
-                      {' '}<Badge bg="success" pill style={{ fontSize: '0.7rem' }}>ПФДО</Badge>
-                    </p>
-                  )}
                   <p><strong>Создано:</strong> {formatDateTime(event.createdAt)}</p>
                 </Col>
               </Row>
@@ -300,7 +277,6 @@ export default function EventDetail() {
               <tr>
                 <th>ID</th>
                 <th>Участник</th>
-                <th>Статус</th>
                 <th>Оплата</th>
                 <th>Сумма</th>
                 <th>Дата</th>
@@ -311,32 +287,29 @@ export default function EventDetail() {
             <tbody>
               {bookings.map((booking) => {
                 const payment = paymentBadge[booking.paymentStatus ?? ''];
-                const isGuest = !booking.userId;
                 return (
                   <tr key={booking.id}>
                     <td>{booking.id}</td>
                     <td>
-                      {isGuest ? (
-                        <span>
-                          {booking.guestName ?? booking.userName ?? '—'}
-                          <Badge bg="secondary" className="ms-1" style={{ fontSize: '0.65rem' }}>
-                            Гость
-                          </Badge>
-                          {(booking.guestPhone || booking.guestEmail) && (
-                            <div className="text-muted" style={{ fontSize: '0.8rem' }}>
-                              {booking.guestPhone && <span>{booking.guestPhone}</span>}
-                              {booking.guestPhone && booking.guestEmail && ' · '}
-                              {booking.guestEmail && <span>{booking.guestEmail}</span>}
-                            </div>
-                          )}
-                        </span>
-                      ) : (
-                        <Link to={`/admin/users/${booking.userId}`}>
-                          {booking.userName ?? `User #${booking.userId}`}
-                        </Link>
+                      <div>
+                        {booking.guestName ?? '—'}
+                        {booking.status === 'CANCELLED' && (
+                          <Badge bg="danger" className="ms-1" style={{ fontSize: '0.65rem' }}>Отменено</Badge>
+                        )}
+                      </div>
+                      {(booking.guestPhone || booking.guestEmail) && (
+                        <div className="text-muted" style={{ fontSize: '0.8rem' }}>
+                          {booking.guestPhone && <span>{booking.guestPhone}</span>}
+                          {booking.guestPhone && booking.guestEmail && ' · '}
+                          {booking.guestEmail && <span>{booking.guestEmail}</span>}
+                        </div>
+                      )}
+                      {booking.notes && (
+                        <div className="text-muted fst-italic" style={{ fontSize: '0.78rem', marginTop: '2px' }}>
+                          💬 {booking.notes}
+                        </div>
                       )}
                     </td>
-                    <td><StatusBadge status={booking.status} /></td>
                     <td>
                       {payment ? <Badge bg={payment.bg}>{payment.label}</Badge> : '—'}
                     </td>
@@ -383,29 +356,17 @@ export default function EventDetail() {
                       })()}
                     </td>
                     <td className="text-center text-nowrap">
-                      {booking.status === 'PENDING' && (
-                        <>
-                          <Button
-                            variant="outline-success" size="sm" className="me-1"
-                            onClick={() => handleConfirm(booking.id)}
-                            disabled={actionLoading === booking.id}
-                            title="Подтвердить"
-                          >
-                            {actionLoading === booking.id
-                              ? <Spinner size="sm" />
-                              : <BsCheckCircle />}
-                          </Button>
-                          <Button
-                            variant="outline-danger" size="sm" className="me-1"
-                            onClick={() => handleCancel(booking.id)}
-                            disabled={actionLoading === booking.id}
-                            title="Отменить"
-                          >
-                            {actionLoading === booking.id
-                              ? <Spinner size="sm" />
-                              : <BsXCircle />}
-                          </Button>
-                        </>
+                      {booking.status !== 'CANCELLED' && (
+                        <Button
+                          variant="outline-danger" size="sm" className="me-1"
+                          onClick={() => handleCancel(booking.id)}
+                          disabled={actionLoading === booking.id}
+                          title="Отменить"
+                        >
+                          {actionLoading === booking.id
+                            ? <Spinner size="sm" />
+                            : <BsXCircle />}
+                        </Button>
                       )}
                       {booking.paymentStatus === 'PENDING' && (
                         <Button
@@ -425,7 +386,7 @@ export default function EventDetail() {
               })}
               {bookings.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="text-center text-muted py-4">
+                  <td colSpan={7} className="text-center text-muted py-4">
                     Нет бронирований
                   </td>
                 </tr>
@@ -549,17 +510,6 @@ export default function EventDetail() {
                 </Form.Group>
               </Col>
             </Row>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Статус</Form.Label>
-              <Form.Select
-                value={form.status ?? 'CONFIRMED'}
-                onChange={(e) => handleFormChange('status', e.target.value)}
-              >
-                <option value="CONFIRMED">Подтверждено</option>
-                <option value="PENDING">Ожидает подтверждения</option>
-              </Form.Select>
-            </Form.Group>
 
             <Form.Group className="mb-3">
               <Form.Check
