@@ -49,7 +49,6 @@ export interface Event {
   price?: number;
   /** Цена при наличии сертификата ПФДО. Только для SESSION_OUTDOOR событий. */
   priceWithCertificate?: number;
-  gameMaster?: string;
   status?: string;
   createdAt: string;
   /** Available spots, computed from summary */
@@ -66,7 +65,6 @@ export interface EventFormData {
   price?: number;
   /** Цена при наличии сертификата ПФДО. Только для SESSION_OUTDOOR событий. */
   priceWithCertificate?: number;
-  gameMaster?: string;
   status?: string;
 }
 

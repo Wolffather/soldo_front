@@ -21,7 +21,6 @@ export default function EventForm() {
     endDate: '',
     maxParticipants: 20,
     price: 0,
-    gameMaster: '',
     status: 'PUBLISHED',
   });
 
@@ -46,7 +45,6 @@ export default function EventForm() {
         endDate: event.endDate ?? '',
         maxParticipants: event.maxParticipants ?? 20,
         price: event.price ?? 0,
-        gameMaster: event.gameMaster ?? '',
         status: event.status ?? 'PUBLISHED',
       });
     } catch {
@@ -74,7 +72,6 @@ export default function EventForm() {
       startDate: form.startDate || undefined,
       endDate: form.endDate || undefined,
       maxParticipants: form.maxParticipants || undefined,
-      gameMaster: form.gameMaster || undefined,
       price: form.price || undefined,
     };
 
@@ -226,19 +223,6 @@ export default function EventForm() {
                   {fieldErrors.price && (
                     <Form.Control.Feedback type="invalid">{fieldErrors.price}</Form.Control.Feedback>
                   )}
-                </Form.Group>
-              </Col>
-            </Row>
-
-            <Row>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Ведущий</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={form.gameMaster ?? ''}
-                    onChange={(e) => handleChange('gameMaster', e.target.value)}
-                  />
                 </Form.Group>
               </Col>
             </Row>

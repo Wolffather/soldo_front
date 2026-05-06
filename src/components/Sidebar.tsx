@@ -5,8 +5,6 @@ import {
   BsCalendarEvent,
   BsBookmark,
   BsBoxArrowRight,
-  BsFileEarmarkText,
-  BsEnvelopeFill,
   BsCodeSlash,
 } from 'react-icons/bs';
 
@@ -40,30 +38,16 @@ export default function Sidebar() {
         </Nav.Item>
 
         <Nav.Item>
-          <NavLink to="/admin/bookings" className={navLinkClass}>
-            <BsBookmark />
-            Бронирования
-          </NavLink>
-        </Nav.Item>
-
-        <Nav.Item>
-          <NavLink to="/admin/inquiries" className={navLinkClass}>
-            <BsEnvelopeFill />
-            Обратная связь
-          </NavLink>
-        </Nav.Item>
-
-        <Nav.Item>
-          <NavLink to="/admin/documents" className={navLinkClass}>
-            <BsFileEarmarkText />
-            Документы
-          </NavLink>
-        </Nav.Item>
-
-        <Nav.Item>
           <NavLink to="/admin/events" className={navLinkClass}>
             <BsCalendarEvent />
             События
+          </NavLink>
+        </Nav.Item>
+
+        <Nav.Item>
+          <NavLink to="/admin/bookings" className={navLinkClass}>
+            <BsBookmark />
+            Бронирования
           </NavLink>
         </Nav.Item>
 
