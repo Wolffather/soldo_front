@@ -57,7 +57,7 @@ export default function EventDetail() {
   const [eventTemplates, setEventTemplates] = useState<DocumentTemplate[]>([]);
   const [templatesLoading, setTemplatesLoading] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
-  const [templateForm, setTemplateForm] = useState<DocumentTemplateRequest>({ name: '', requiresSignature: true });
+  const [templateForm, setTemplateForm] = useState<DocumentTemplateRequest>({ name: '' });
   const [templateFormError, setTemplateFormError] = useState('');
   const [templateFormLoading, setTemplateFormLoading] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -163,7 +163,7 @@ export default function EventDetail() {
       }
       await documentApi.create({ ...templateForm, fileUrl, eventId: Number(id) });
       setShowTemplateModal(false);
-      setTemplateForm({ name: '', requiresSignature: true });
+      setTemplateForm({ name: '' });
       setUploadFile(null);
       loadTemplates();
     } catch {
@@ -696,7 +696,7 @@ export default function EventDetail() {
             </span>
           </div>
           <Button variant="outline-primary" size="sm" onClick={() => {
-            setTemplateForm({ name: '', requiresSignature: true });
+            setTemplateForm({ name: '' });
             setUploadFile(null);
             setTemplateFormError('');
             setShowTemplateModal(true);
@@ -800,15 +800,6 @@ export default function EventDetail() {
               <Form.Text className="text-muted">
                 Файл загрузится на сервер при сохранении. Ссылка для скачивания включается в письмо участнику.
               </Form.Text>
-            </Form.Group>
-            <Form.Group className="mb-1">
-              <Form.Check
-                type="checkbox"
-                id="requiresSignature"
-                label="Требует электронной подписи"
-                checked={templateForm.requiresSignature ?? true}
-                onChange={(e) => setTemplateForm((p) => ({ ...p, requiresSignature: e.target.checked }))}
-              />
             </Form.Group>
           </Form>
         </Modal.Body>

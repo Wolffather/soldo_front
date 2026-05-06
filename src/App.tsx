@@ -7,7 +7,6 @@ import EventForm from './pages/EventForm';
 import Bookings from './pages/Bookings';
 import WidgetSettings from './pages/WidgetSettings';
 import AppSettings from './pages/AppSettings';
-import Documents from './pages/Documents';
 import NotFound from './pages/NotFound';
 
 export default function App() {
@@ -23,7 +22,6 @@ export default function App() {
         <Route path="events/:id/edit" element={<EventForm />} />
         <Route path="bookings" element={<Bookings />} />
         <Route path="widget" element={<WidgetSettings />} />
-        <Route path="documents" element={<Documents />} />
         <Route path="settings" element={<AppSettings />} />
       </Route>
 
