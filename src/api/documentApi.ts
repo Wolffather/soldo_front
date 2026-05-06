@@ -2,6 +2,11 @@ import client from './client';
 import type { DocumentTemplate, DocumentTemplateRequest } from '../types';
 
 export const documentApi = {
+  getAll: async (): Promise<DocumentTemplate[]> => {
+    const response = await client.get('/document-templates');
+    return response.data;
+  },
+
   getByEvent: async (eventId: number): Promise<DocumentTemplate[]> => {
     const response = await client.get('/document-templates', { params: { eventId } });
     return response.data;

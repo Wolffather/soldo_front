@@ -5,6 +5,7 @@ import {
   BsCalendarEvent,
   BsBookmark,
   BsCodeSlash,
+  BsFileEarmark,
   BsGear,
 } from 'react-icons/bs';
 
@@ -45,6 +46,13 @@ export default function Sidebar() {
           <NavLink to="/admin/widget" className={navLinkClass}>
             <BsCodeSlash />
             Виджет
+          </NavLink>
+        </Nav.Item>
+
+        <Nav.Item>
+          <NavLink to="/admin/documents" className={navLinkClass}>
+            <BsFileEarmark />
+            Документы
           </NavLink>
         </Nav.Item>
 

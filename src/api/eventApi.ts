@@ -1,5 +1,5 @@
 import client from './client';
-import type { Event, EventFormData, EventCategory, EventItem, Page } from '../types';
+import type { Event, EventFormData, Page } from '../types';
 
 export const eventApi = {
   getAll: async (page = 0, size = 10): Promise<Page<Event>> => {
@@ -26,13 +26,8 @@ export const eventApi = {
     await client.delete(`/events/${id}`);
   },
 
-  getCategories: async (): Promise<EventCategory[]> => {
-    const response = await client.get('/categories');
-    return response.data;
-  },
-
-  getUpcoming: async (): Promise<EventItem[]> => {
-    const response = await client.get('/events/upcoming');
-    return response.data;
+  getAllList: async (): Promise<Event[]> => {
+    const response = await client.get('/events', { params: { page: 0, size: 200 } });
+    return (response.data as Page<Event>).content;
   },
 };
