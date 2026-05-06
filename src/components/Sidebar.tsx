@@ -1,24 +1,13 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { Nav } from 'react-bootstrap';
 import {
   BsSpeedometer2,
   BsCalendarEvent,
   BsBookmark,
-  BsBoxArrowRight,
   BsCodeSlash,
 } from 'react-icons/bs';
 
-import { useAuth } from '../auth/AuthContext';
-
 export default function Sidebar() {
-  const { logout } = useAuth();
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     `nav-link text-white d-flex align-items-center gap-2 rounded mb-1 ${isActive ? 'bg-primary' : 'hover-bg-secondary'}`;
 
@@ -58,17 +47,6 @@ export default function Sidebar() {
           </NavLink>
         </Nav.Item>
       </Nav>
-
-      <Nav.Item className="mt-auto">
-        <Nav.Link
-          onClick={handleLogout}
-          className="text-white d-flex align-items-center gap-2"
-          role="button"
-        >
-          <BsBoxArrowRight />
-          Выйти
-        </Nav.Link>
-      </Nav.Item>
     </div>
   );
 }

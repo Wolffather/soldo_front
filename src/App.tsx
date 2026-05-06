@@ -1,8 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
-import ProtectedRoute from './auth/ProtectedRoute';
-import Login from './pages/Login';
-import RegisterPage from './pages/RegisterPage';
 import Dashboard from './pages/Dashboard';
 import Events from './pages/Events';
 import EventDetail from './pages/EventDetail';
@@ -14,29 +11,9 @@ import NotFound from './pages/NotFound';
 export default function App() {
   return (
     <Routes>
-      {/* ── Auth ── */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<RegisterPage />} />
+      <Route path="/" element={<Navigate to="/admin" replace />} />
 
-      {/* ── Root redirect ── */}
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <Navigate to="/admin" replace />
-          </ProtectedRoute>
-        }
-      />
-
-      {/* ── Admin panel ── */}
-      <Route
-        path="/admin"
-        element={
-          <ProtectedRoute>
-            <Layout />
-          </ProtectedRoute>
-        }
-      >
+      <Route path="/admin" element={<Layout />}>
         <Route index element={<Dashboard />} />
         <Route path="events" element={<Events />} />
         <Route path="events/new" element={<EventForm />} />
