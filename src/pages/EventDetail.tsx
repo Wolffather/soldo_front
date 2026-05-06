@@ -5,11 +5,12 @@ import {
   Modal, Form,
 } from 'react-bootstrap';
 import {
-  BsPencil, BsArrowLeft, BsXCircle, BsCashCoin, BsPlusCircle,
+  BsPencil, BsArrowLeft, BsXCircle, BsCashCoin, BsPlusCircle, BsEnvelope, BsTrash, BsUpload,
 } from 'react-icons/bs';
 import { eventApi } from '../api/eventApi';
 import { bookingApi } from '../api/bookingApi';
-import type { Event, Booking, BookingSummary, AdminBookingRequest, BookingDocument } from '../types';
+import { documentApi } from '../api/documentApi';
+import type { Event, Booking, BookingSummary, AdminBookingRequest, BookingDocument, DocumentTemplate, DocumentTemplateRequest } from '../types';
 import { formatDate, formatDateTime } from '../utils/format';
 
 const paymentBadge: Record<string, { bg: string; label: string }> = {
@@ -50,6 +51,16 @@ export default function EventDetail() {
   const [docModalBookingId, setDocModalBookingId] = useState<number | null>(null);
   const [docsForBooking, setDocsForBooking] = useState<BookingDocument[]>([]);
   const [docsLoading, setDocsLoading] = useState(false);
+  const [sendingDocs, setSendingDocs] = useState<number | null>(null);
+
+  // --- Event document templates ---
+  const [eventTemplates, setEventTemplates] = useState<DocumentTemplate[]>([]);
+  const [templatesLoading, setTemplatesLoading] = useState(false);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [templateForm, setTemplateForm] = useState<DocumentTemplateRequest>({ name: '', requiresSignature: true });
+  const [templateFormError, setTemplateFormError] = useState('');
+  const [templateFormLoading, setTemplateFormLoading] = useState(false);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
 
   useEffect(() => {
     const eventId = Number(id);
@@ -81,10 +92,84 @@ export default function EventDetail() {
       } catch {
         setSummary(null);
       }
+
+      try {
+        const templates = await documentApi.getByEvent(eventId);
+        setEventTemplates(templates);
+      } catch {
+        setEventTemplates([]);
+      }
     } catch {
       setError('Ошибка загрузки события');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSendDocuments = async (bookingId: number) => {
+    setSendingDocs(bookingId);
+    try {
+      await bookingApi.sendDocuments(bookingId);
+      // Refresh docs if modal is open for this booking
+      if (docModalBookingId === bookingId) {
+        const docs = await bookingApi.getBookingDocuments(bookingId);
+        setDocsForBooking(docs);
+      }
+    } catch {
+      setError('Ошибка при отправке документов');
+    } finally {
+      setSendingDocs(null);
+    }
+  };
+
+  const loadTemplates = async () => {
+    setTemplatesLoading(true);
+    try {
+      const templates = await documentApi.getByEvent(Number(id));
+      setEventTemplates(templates);
+    } catch {
+      /* ignore */
+    } finally {
+      setTemplatesLoading(false);
+    }
+  };
+
+  const handleDeleteTemplate = async (templateId: number) => {
+    try {
+      await documentApi.delete(templateId);
+      setEventTemplates((prev) => prev.filter((t) => t.id !== templateId));
+    } catch {
+      setError('Ошибка удаления шаблона');
+    }
+  };
+
+  const handleCreateTemplate = async () => {
+    if (!templateForm.name?.trim()) {
+      setTemplateFormError('Введите название документа');
+      return;
+    }
+    setTemplateFormLoading(true);
+    setTemplateFormError('');
+    try {
+      let fileUrl = templateForm.fileUrl;
+      if (uploadFile) {
+        const formData = new FormData();
+        formData.append('file', uploadFile);
+        const resp = await fetch('/api/admin/upload', { method: 'POST', body: formData });
+        if (resp.ok) {
+          const data = await resp.json();
+          fileUrl = data.filename ?? data.fileUrl ?? fileUrl;
+        }
+      }
+      await documentApi.create({ ...templateForm, fileUrl, eventId: Number(id) });
+      setShowTemplateModal(false);
+      setTemplateForm({ name: '', requiresSignature: true });
+      setUploadFile(null);
+      loadTemplates();
+    } catch {
+      setTemplateFormError('Ошибка создания шаблона');
+    } finally {
+      setTemplateFormLoading(false);
     }
   };
 
@@ -277,6 +362,7 @@ export default function EventDetail() {
               <tr>
                 <th>ID</th>
                 <th>Участник</th>
+                <th>Вариант</th>
                 <th>Оплата</th>
                 <th>Сумма</th>
                 <th>Дата</th>
@@ -309,6 +395,11 @@ export default function EventDetail() {
                           💬 {booking.notes}
                         </div>
                       )}
+                    </td>
+                    <td>
+                      {booking.priceOptionName
+                        ? <Badge bg="info" text="dark" style={{ fontSize: '0.78rem' }}>{booking.priceOptionName}</Badge>
+                        : <span className="text-muted small">—</span>}
                     </td>
                     <td>
                       {payment ? <Badge bg={payment.bg}>{payment.label}</Badge> : '—'}
@@ -370,7 +461,7 @@ export default function EventDetail() {
                       )}
                       {booking.paymentStatus === 'PENDING' && (
                         <Button
-                          variant="outline-success" size="sm"
+                          variant="outline-success" size="sm" className="me-1"
                           onClick={() => handlePayment(booking.id, 'PAID')}
                           disabled={actionLoading === booking.id}
                           title="Отметить оплату"
@@ -378,6 +469,16 @@ export default function EventDetail() {
                           {actionLoading === booking.id
                             ? <Spinner size="sm" />
                             : <BsCashCoin />}
+                        </Button>
+                      )}
+                      {eventTemplates.length > 0 && booking.guestEmail && booking.status !== 'CANCELLED' && (
+                        <Button
+                          variant="outline-primary" size="sm"
+                          onClick={() => handleSendDocuments(booking.id)}
+                          disabled={sendingDocs === booking.id}
+                          title="Отправить документы на email"
+                        >
+                          {sendingDocs === booking.id ? <Spinner size="sm" /> : <BsEnvelope />}
                         </Button>
                       )}
                     </td>
@@ -416,6 +517,7 @@ export default function EventDetail() {
                   <th>Тип</th>
                   <th>Статус</th>
                   <th>Подписант / Дата</th>
+                  <th>Email</th>
                 </tr>
               </thead>
               <tbody>
@@ -454,6 +556,18 @@ export default function EventDetail() {
                         <span className="text-muted">—</span>
                       )}
                     </td>
+                    <td>
+                      {doc.emailSentAt ? (
+                        <div>
+                          <Badge bg="success" style={{ fontSize: '0.7rem' }}>✉ Отправлено</Badge>
+                          <div className="text-muted" style={{ fontSize: '0.75rem' }}>
+                            {formatDateTime(doc.emailSentAt)}
+                          </div>
+                        </div>
+                      ) : (
+                        <Badge bg="secondary" style={{ fontSize: '0.7rem' }}>Не отправлено</Badge>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -461,6 +575,17 @@ export default function EventDetail() {
           )}
         </Modal.Body>
         <Modal.Footer>
+          {docModalBookingId !== null && (
+            <Button
+              variant="primary"
+              onClick={() => handleSendDocuments(docModalBookingId)}
+              disabled={sendingDocs === docModalBookingId}
+            >
+              {sendingDocs === docModalBookingId
+                ? <><Spinner size="sm" className="me-1" />Отправка...</>
+                : <><BsEnvelope className="me-1" />Отправить документы</>}
+            </Button>
+          )}
           <Button variant="secondary" onClick={closeDocModal}>
             Закрыть
           </Button>
@@ -511,6 +636,23 @@ export default function EventDetail() {
               </Col>
             </Row>
 
+            {event?.priceOptions && event.priceOptions.length > 0 && (
+              <Form.Group className="mb-3">
+                <Form.Label>Вариант участия</Form.Label>
+                <Form.Select
+                  value={form.priceOptionId ?? ''}
+                  onChange={(e) => handleFormChange('priceOptionId', e.target.value ? Number(e.target.value) : undefined)}
+                >
+                  <option value="">— не выбрано —</option>
+                  {event.priceOptions.map((o) => (
+                    <option key={o.id} value={o.id}>
+                      {o.name} — {o.price.toLocaleString('ru-RU')} ₽
+                    </option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
+            )}
+
             <Form.Group className="mb-3">
               <Form.Check
                 type="checkbox"
@@ -540,6 +682,143 @@ export default function EventDetail() {
           <Button variant="success" onClick={handleCreate} disabled={formLoading}>
             {formLoading ? <Spinner size="sm" className="me-1" /> : null}
             Создать бронирование
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* ── Документы события ── */}
+      <Card className="mt-4">
+        <Card.Header className="d-flex justify-content-between align-items-center">
+          <div>
+            <strong>Документы события</strong>
+            <span className="text-muted ms-2" style={{ fontSize: '0.85rem' }}>
+              — отправляются участнику автоматически при бронировании
+            </span>
+          </div>
+          <Button variant="outline-primary" size="sm" onClick={() => {
+            setTemplateForm({ name: '', requiresSignature: true });
+            setUploadFile(null);
+            setTemplateFormError('');
+            setShowTemplateModal(true);
+          }}>
+            <BsPlusCircle className="me-1" /> Добавить документ
+          </Button>
+        </Card.Header>
+        <Card.Body className={eventTemplates.length === 0 ? '' : 'p-0'}>
+          {templatesLoading ? (
+            <div className="text-center py-3"><Spinner animation="border" size="sm" /></div>
+          ) : eventTemplates.length === 0 ? (
+            <p className="text-muted mb-0">
+              Нет прикреплённых документов. Добавьте шаблон — он будет отправляться на email при каждом новом бронировании.
+            </p>
+          ) : (
+            <Table size="sm" hover responsive className="mb-0">
+              <thead className="table-light">
+                <tr>
+                  <th>Название</th>
+                  <th>Файл</th>
+                  <th>Тип</th>
+                  <th className="text-center">Действия</th>
+                </tr>
+              </thead>
+              <tbody>
+                {eventTemplates.map((t) => (
+                  <tr key={t.id}>
+                    <td>
+                      <div>{t.name}</div>
+                      {t.description && (
+                        <div className="text-muted" style={{ fontSize: '0.78rem' }}>{t.description}</div>
+                      )}
+                    </td>
+                    <td>
+                      {t.fileUrl ? (
+                        <a href={`/api/files/${t.fileUrl}`} target="_blank" rel="noreferrer"
+                           style={{ fontSize: '0.85rem' }}>
+                          <BsUpload className="me-1" />{t.fileUrl}
+                        </a>
+                      ) : (
+                        <span className="text-muted">—</span>
+                      )}
+                    </td>
+                    <td>
+                      {t.requiresSignature
+                        ? <Badge bg="primary">✍ Подпись</Badge>
+                        : <Badge bg="secondary">👁 Ознакомление</Badge>}
+                    </td>
+                    <td className="text-center">
+                      <Button
+                        variant="outline-danger" size="sm"
+                        onClick={() => handleDeleteTemplate(t.id)}
+                        title="Удалить"
+                      >
+                        <BsTrash />
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          )}
+        </Card.Body>
+      </Card>
+
+      {/* ── Modal: добавить документ ── */}
+      <Modal show={showTemplateModal} onHide={() => setShowTemplateModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Добавить документ к событию</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {templateFormError && <Alert variant="danger" className="py-2">{templateFormError}</Alert>}
+          <Form>
+            <Form.Group className="mb-3">
+              <Form.Label>Название <span className="text-danger">*</span></Form.Label>
+              <Form.Control
+                placeholder="Согласие на обработку персональных данных"
+                value={templateForm.name}
+                onChange={(e) => setTemplateForm((p) => ({ ...p, name: e.target.value }))}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Описание</Form.Label>
+              <Form.Control
+                placeholder="Краткое описание документа..."
+                value={templateForm.description ?? ''}
+                onChange={(e) => setTemplateForm((p) => ({ ...p, description: e.target.value }))}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Файл документа (PDF / Word)</Form.Label>
+              <Form.Control
+                type="file"
+                accept=".pdf,.doc,.docx"
+                onChange={(e) => {
+                  const file = (e.target as HTMLInputElement).files?.[0] ?? null;
+                  setUploadFile(file);
+                  if (file) setTemplateForm((p) => ({ ...p, fileUrl: file.name }));
+                }}
+              />
+              <Form.Text className="text-muted">
+                Файл загрузится на сервер при сохранении. Ссылка для скачивания включается в письмо участнику.
+              </Form.Text>
+            </Form.Group>
+            <Form.Group className="mb-1">
+              <Form.Check
+                type="checkbox"
+                id="requiresSignature"
+                label="Требует электронной подписи"
+                checked={templateForm.requiresSignature ?? true}
+                onChange={(e) => setTemplateForm((p) => ({ ...p, requiresSignature: e.target.checked }))}
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowTemplateModal(false)}>
+            Отмена
+          </Button>
+          <Button variant="primary" onClick={handleCreateTemplate} disabled={templateFormLoading}>
+            {templateFormLoading ? <Spinner size="sm" className="me-1" /> : null}
+            Сохранить
           </Button>
         </Modal.Footer>
       </Modal>

@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Form, Button, Row, Col, Spinner, Alert } from 'react-bootstrap';
-import { BsArrowLeft } from 'react-icons/bs';
+import { Card, Form, Button, Row, Col, Spinner, Alert, Table } from 'react-bootstrap';
+import { BsArrowLeft, BsTrash, BsPlusCircle } from 'react-icons/bs';
 import { eventApi } from '../api/eventApi';
-import type { EventFormData } from '../types';
+import type { EventFormData, EventPriceOption } from '../types';
 import { EVENT_STATUSES } from '../constants/eventConstants';
 
 type FieldErrors = Record<string, string>;
+
+const DEFAULT_OPTION: EventPriceOption = { name: '', price: 0 };
 
 export default function EventForm() {
   const { id } = useParams<{ id: string }>();
@@ -22,6 +24,7 @@ export default function EventForm() {
     maxParticipants: 20,
     price: 0,
     status: 'PUBLISHED',
+    priceOptions: [{ ...DEFAULT_OPTION }],
   });
 
   const [loading, setLoading] = useState(false);
@@ -46,6 +49,9 @@ export default function EventForm() {
         maxParticipants: event.maxParticipants ?? 20,
         price: event.price ?? 0,
         status: event.status ?? 'PUBLISHED',
+        priceOptions: event.priceOptions && event.priceOptions.length > 0
+          ? event.priceOptions
+          : [{ ...DEFAULT_OPTION }],
       });
     } catch {
       setError('Ошибка загрузки события');
@@ -61,18 +67,43 @@ export default function EventForm() {
     }
   };
 
+  const handleOptionChange = (index: number, field: keyof EventPriceOption, value: string | number) => {
+    setForm((prev) => {
+      const opts = [...(prev.priceOptions ?? [])];
+      opts[index] = { ...opts[index], [field]: value };
+      return { ...prev, priceOptions: opts };
+    });
+  };
+
+  const addOption = () => {
+    setForm((prev) => ({
+      ...prev,
+      priceOptions: [...(prev.priceOptions ?? []), { ...DEFAULT_OPTION }],
+    }));
+  };
+
+  const removeOption = (index: number) => {
+    setForm((prev) => {
+      const opts = (prev.priceOptions ?? []).filter((_, i) => i !== index);
+      return { ...prev, priceOptions: opts.length > 0 ? opts : [{ ...DEFAULT_OPTION }] };
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSaving(true);
     setError('');
     setFieldErrors({});
 
+    const validOptions = (form.priceOptions ?? []).filter(o => o.name.trim() && o.price > 0);
+
     const payload: EventFormData = {
       ...form,
       startDate: form.startDate || undefined,
       endDate: form.endDate || undefined,
       maxParticipants: form.maxParticipants || undefined,
-      price: form.price || undefined,
+      price: validOptions.length > 0 ? validOptions[0].price : (form.price || undefined),
+      priceOptions: validOptions.length > 0 ? validOptions : undefined,
     };
 
     try {
@@ -105,6 +136,8 @@ export default function EventForm() {
       </div>
     );
   }
+
+  const options = form.priceOptions ?? [];
 
   return (
     <>
@@ -163,7 +196,7 @@ export default function EventForm() {
             </Form.Group>
 
             <Row>
-              <Col md={3}>
+              <Col md={4}>
                 <Form.Group className="mb-3">
                   <Form.Label>Дата начала</Form.Label>
                   <Form.Control
@@ -177,7 +210,7 @@ export default function EventForm() {
                   )}
                 </Form.Group>
               </Col>
-              <Col md={3}>
+              <Col md={4}>
                 <Form.Group className="mb-3">
                   <Form.Label>Дата окончания</Form.Label>
                   <Form.Control
@@ -191,7 +224,7 @@ export default function EventForm() {
                   )}
                 </Form.Group>
               </Col>
-              <Col md={3}>
+              <Col md={4}>
                 <Form.Group className="mb-3">
                   <Form.Label>Макс. участников</Form.Label>
                   <Form.Control
@@ -206,28 +239,70 @@ export default function EventForm() {
                   )}
                 </Form.Group>
               </Col>
-              <Col md={3}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Цена (₽)</Form.Label>
-                  <Form.Control
-                    type="text"
-                    inputMode="numeric"
-                    placeholder="0"
-                    value={form.price || ''}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, '');
-                      handleChange('price', val ? Number(val) : 0);
-                    }}
-                    isInvalid={!!fieldErrors.price}
-                  />
-                  {fieldErrors.price && (
-                    <Form.Control.Feedback type="invalid">{fieldErrors.price}</Form.Control.Feedback>
-                  )}
-                </Form.Group>
-              </Col>
             </Row>
 
-            <div className="d-flex gap-2 mt-2">
+            {/* Price options */}
+            <div className="mb-3">
+              <Form.Label className="fw-semibold">Опции оплаты</Form.Label>
+              <Form.Text className="text-muted d-block mb-2">
+                Добавьте варианты участия с разной стоимостью. Пользователь выберет один из них при бронировании.
+              </Form.Text>
+              <Table size="sm" bordered className="mb-2" style={{ maxWidth: 520 }}>
+                <thead>
+                  <tr>
+                    <th>Название опции</th>
+                    <th style={{ width: 130 }}>Цена (₽)</th>
+                    <th style={{ width: 44 }}></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {options.map((opt, i) => (
+                    <tr key={i}>
+                      <td>
+                        <Form.Control
+                          size="sm"
+                          type="text"
+                          placeholder={i === 0 ? 'Например: 1 день' : 'Например: 2 дня'}
+                          value={opt.name}
+                          onChange={(e) => handleOptionChange(i, 'name', e.target.value)}
+                        />
+                      </td>
+                      <td>
+                        <Form.Control
+                          size="sm"
+                          type="text"
+                          inputMode="numeric"
+                          placeholder="0"
+                          value={opt.price || ''}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/\D/g, '');
+                            handleOptionChange(i, 'price', val ? Number(val) : 0);
+                          }}
+                        />
+                      </td>
+                      <td className="text-center">
+                        <Button
+                          variant="link"
+                          size="sm"
+                          className="text-danger p-0"
+                          onClick={() => removeOption(i)}
+                          disabled={options.length === 1}
+                          title="Удалить опцию"
+                        >
+                          <BsTrash />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+              <Button variant="outline-secondary" size="sm" onClick={addOption}>
+                <BsPlusCircle className="me-1" />
+                Добавить вариант
+              </Button>
+            </div>
+
+            <div className="d-flex gap-2 mt-3">
               <Button type="submit" variant="primary" disabled={saving}>
                 {saving ? <Spinner size="sm" /> : isEdit ? 'Сохранить' : 'Создать'}
               </Button>

@@ -53,4 +53,10 @@ export const bookingApi = {
     const response = await client.get(`/admin/bookings/${bookingId}/documents`);
     return response.data as import('../types').BookingDocument[];
   },
+
+  /** Отправить (или повторно отправить) письмо с документами участнику */
+  sendDocuments: async (bookingId: number): Promise<import('../types').Booking> => {
+    const response = await client.post(`/bookings/${bookingId}/send-documents`);
+    return response.data;
+  },
 };

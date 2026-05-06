@@ -1,5 +1,11 @@
 // ── Event ──
 
+export interface EventPriceOption {
+  id?: number;
+  name: string;
+  price: number;
+}
+
 export interface Event {
   id: number;
   title: string;
@@ -11,6 +17,7 @@ export interface Event {
   status?: string;
   createdAt: string;
   availableSpots?: number;
+  priceOptions?: EventPriceOption[];
 }
 
 export interface EventFormData {
@@ -21,6 +28,7 @@ export interface EventFormData {
   maxParticipants?: number;
   price?: number;
   status?: string;
+  priceOptions?: EventPriceOption[];
 }
 
 // ── Booking ──
@@ -46,6 +54,8 @@ export interface Booking {
   documentSigned?: number;
   documentRequireSignature?: number;
   notes?: string;
+  priceOptionId?: number;
+  priceOptionName?: string;
 }
 
 export interface AdminBookingRequest {
@@ -56,6 +66,7 @@ export interface AdminBookingRequest {
   hasCertificate?: boolean;
   status?: BookingStatus;
   notes?: string;
+  priceOptionId?: number;
 }
 
 export type BookingStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED';
@@ -79,11 +90,21 @@ export interface DocumentTemplate {
   name: string;
   description?: string;
   fileUrl?: string;
-  categoryFormat: string;
-  isRequired: boolean;
+  eventId?: number;
+  categoryFormat?: string;
+  isRequired?: boolean;
   /** true — требует электронной подписи, false — только ознакомление */
-  requiresSignature: boolean;
+  requiresSignature?: boolean;
   createdAt?: string;
+}
+
+export interface DocumentTemplateRequest {
+  name: string;
+  description?: string;
+  fileUrl?: string;
+  eventId?: number;
+  isRequired?: boolean;
+  requiresSignature?: boolean;
 }
 
 // ── Booking Document (with signature status) ──
@@ -105,8 +126,9 @@ export interface BookingDocument {
   archived?: boolean;
   signerName?: string;
   signedAt?: string;
-  /** Данные договора (паспорт, адрес), зафиксированные при подписании — JSON строка */
   filledData?: string;
+  /** null — письмо ещё не отправлялось */
+  emailSentAt?: string;
 }
 
 // ── Pagination ──
