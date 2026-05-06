@@ -85,7 +85,7 @@ export default function Dashboard() {
             <Card.Body>
               <BsExclamationTriangle size={24} className="text-warning mb-2" />
               <h3>{pendingBookings}</h3>
-              <small className="text-muted">Ожидают подтверждения</small>
+              <small className="text-muted">Ожидают оплаты</small>
             </Card.Body>
           </Card>
         </Col>
@@ -123,7 +123,14 @@ export default function Dashboard() {
                         <Link to={`/admin/events/${event.id}`}>{event.title}</Link>
                       </td>
                       <td>{formatDate(event.startDate)}</td>
-                      <td>{event.price ? `${event.price} ₽` : 'Бесплатно'}</td>
+                      <td>{(() => {
+                        const opts = event.priceOptions;
+                        if (opts && opts.length > 1) {
+                          const min = Math.min(...opts.map(o => o.price));
+                          return `от ${min.toLocaleString('ru-RU')} ₽`;
+                        }
+                        return event.price ? `${Number(event.price).toLocaleString('ru-RU')} ₽` : 'Бесплатно';
+                      })()}</td>
                     </tr>
                   ))}
                   {events.length === 0 && (
