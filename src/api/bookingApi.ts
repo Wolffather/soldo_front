@@ -19,14 +19,8 @@ export const bookingApi = {
     return response.data;
   },
 
-  confirm: async (id: number): Promise<Booking> => {
-    const response = await client.patch(`/bookings/${id}/confirm`);
-    return response.data;
-  },
-
-  cancel: async (id: number): Promise<Booking> => {
-    const response = await client.patch(`/bookings/${id}/cancel`);
-    return response.data;
+  delete: async (id: number): Promise<void> => {
+    await client.delete(`/bookings/${id}`);
   },
 
   updatePayment: async (id: number, paymentStatus: string, amountPaid?: number): Promise<Booking> => {

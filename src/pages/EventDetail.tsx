@@ -5,7 +5,7 @@ import {
   Modal, Form,
 } from 'react-bootstrap';
 import {
-  BsPencil, BsArrowLeft, BsXCircle, BsCashCoin, BsPlusCircle, BsEnvelope, BsTrash, BsUpload,
+  BsPencil, BsArrowLeft, BsCashCoin, BsPlusCircle, BsEnvelope, BsTrash, BsUpload,
 } from 'react-icons/bs';
 import { eventApi } from '../api/eventApi';
 import { bookingApi } from '../api/bookingApi';
@@ -39,6 +39,7 @@ export default function EventDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [actionLoading, setActionLoading] = useState<number | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
 
   // --- Create booking modal ---
   const [showModal, setShowModal] = useState(false);
@@ -172,13 +173,15 @@ export default function EventDetail() {
     }
   };
 
-  const handleCancel = async (bookingId: number) => {
-    setActionLoading(bookingId);
+  const handleDelete = async () => {
+    if (deleteConfirmId === null) return;
+    setActionLoading(deleteConfirmId);
+    setDeleteConfirmId(null);
     try {
-      await bookingApi.cancel(bookingId);
+      await bookingApi.delete(deleteConfirmId);
       loadData(Number(id));
     } catch {
-      setError('Ошибка отмены');
+      setError('Ошибка удаления бронирования');
     } finally {
       setActionLoading(null);
     }
@@ -342,14 +345,6 @@ export default function EventDetail() {
                   <span className="text-success">Подтверждено:</span>
                   <strong className="text-success">{summary.confirmedBookings}</strong>
                 </div>
-                <div className="d-flex justify-content-between mb-2">
-                  <span className="text-warning">Ожидает:</span>
-                  <strong className="text-warning">{summary.pendingBookings}</strong>
-                </div>
-                <div className="d-flex justify-content-between mb-2">
-                  <span className="text-danger">Отменено:</span>
-                  <strong className="text-danger">{summary.cancelledBookings}</strong>
-                </div>
                 <hr />
                 <div className="d-flex justify-content-between">
                   <span>Свободных мест:</span>
@@ -394,9 +389,6 @@ export default function EventDetail() {
                     <td>
                       <div>
                         {booking.guestName ?? '—'}
-                        {booking.status === 'CANCELLED' && (
-                          <Badge bg="danger" className="ms-1" style={{ fontSize: '0.65rem' }}>Отменено</Badge>
-                        )}
                       </div>
                       {(booking.guestPhone || booking.guestEmail) && (
                         <div className="text-muted" style={{ fontSize: '0.8rem' }}>
@@ -462,18 +454,16 @@ export default function EventDetail() {
                       })()}
                     </td>
                     <td className="text-center text-nowrap">
-                      {booking.status !== 'CANCELLED' && (
-                        <Button
-                          variant="outline-danger" size="sm" className="me-1"
-                          onClick={() => handleCancel(booking.id)}
-                          disabled={actionLoading === booking.id}
-                          title="Отменить"
-                        >
-                          {actionLoading === booking.id
-                            ? <Spinner size="sm" />
-                            : <BsXCircle />}
-                        </Button>
-                      )}
+                      <Button
+                        variant="outline-danger" size="sm" className="me-1"
+                        onClick={() => setDeleteConfirmId(booking.id)}
+                        disabled={actionLoading === booking.id}
+                        title="Удалить бронирование"
+                      >
+                        {actionLoading === booking.id
+                          ? <Spinner size="sm" />
+                          : <BsTrash />}
+                      </Button>
                       {booking.paymentStatus === 'PENDING' && (
                         <Button
                           variant="outline-success" size="sm" className="me-1"
@@ -486,7 +476,7 @@ export default function EventDetail() {
                             : <BsCashCoin />}
                         </Button>
                       )}
-                      {eventTemplates.length > 0 && booking.guestEmail && booking.status !== 'CANCELLED' && (
+                      {eventTemplates.length > 0 && booking.guestEmail && (
                         <Button
                           variant="outline-primary" size="sm"
                           onClick={() => handleSendDocuments(booking.id)}
@@ -776,6 +766,25 @@ export default function EventDetail() {
           )}
         </Card.Body>
       </Card>
+
+      {/* ── Modal: подтверждение удаления бронирования ── */}
+      <Modal show={deleteConfirmId !== null} onHide={() => setDeleteConfirmId(null)} centered size="sm">
+        <Modal.Header closeButton>
+          <Modal.Title>Удалить бронирование</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Вы уверены, что хотите удалить бронирование <strong>#{deleteConfirmId}</strong>?
+          Это действие необратимо.
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setDeleteConfirmId(null)}>
+            Отмена
+          </Button>
+          <Button variant="danger" onClick={handleDelete}>
+            Удалить
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
       {/* ── Modal: добавить документ ── */}
       <Modal show={showTemplateModal} onHide={() => setShowTemplateModal(false)} centered>
