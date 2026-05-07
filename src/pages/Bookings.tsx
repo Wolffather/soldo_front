@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Accordion, Badge, Button, Spinner, Alert, Table,
+  Accordion, Badge, Button, Spinner, Alert, Table, Modal,
 } from 'react-bootstrap';
-import { BsXCircle, BsCashCoin } from 'react-icons/bs';
+import { BsCashCoin, BsTrash } from 'react-icons/bs';
 import { bookingApi } from '../api/bookingApi';
 import type { BookingSummary, Booking } from '../types';
 import { formatDateTime } from '../utils/format';
@@ -23,6 +23,7 @@ export default function Bookings() {
   const [bookingsMap, setBookingsMap] = useState<Record<number, Booking[]>>({});
   const [loadingMap, setLoadingMap] = useState<Record<number, boolean>>({});
   const [actionLoading, setActionLoading] = useState<number | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ bookingId: number; eventId: number } | null>(null);
 
   useEffect(() => {
     loadSummaries();
@@ -52,16 +53,19 @@ export default function Bookings() {
     }
   };
 
-  const handleCancel = async (bookingId: number, eventId: number) => {
+  const handleDelete = async () => {
+    if (!deleteConfirm) return;
+    const { bookingId, eventId } = deleteConfirm;
+    setDeleteConfirm(null);
     setActionLoading(bookingId);
     try {
-      await bookingApi.cancel(bookingId);
+      await bookingApi.delete(bookingId);
       const updated = await bookingApi.getByEvent(eventId, 0, 200);
       setBookingsMap((prev) => ({ ...prev, [eventId]: updated }));
-      const summaries = await bookingApi.getAllSummaries();
-      setSummaries(summaries);
+      const updatedSummaries = await bookingApi.getAllSummaries();
+      setSummaries(updatedSummaries);
     } catch {
-      setError('Ошибка отмены');
+      setError('Ошибка удаления бронирования');
     } finally {
       setActionLoading(null);
     }
@@ -102,8 +106,7 @@ export default function Bookings() {
           {summaries.map((s) => {
             const bookings = bookingsMap[s.eventId];
             const isLoading = loadingMap[s.eventId];
-            const active = (s.confirmedBookings ?? 0);
-            const cancelled = s.cancelledBookings ?? 0;
+            const active = s.confirmedBookings ?? 0;
 
             return (
               <Accordion.Item key={s.eventId} eventKey={String(s.eventId)}>
@@ -117,9 +120,6 @@ export default function Bookings() {
                       {s.eventTitle}
                     </Link>
                     <Badge bg="primary" pill>{active} бронирований</Badge>
-                    {cancelled > 0 && (
-                      <Badge bg="danger" pill>{cancelled} отмен.</Badge>
-                    )}
                     <Badge bg={s.availableSeats <= 3 ? 'danger' : 'success'} pill className="ms-auto">
                       Свободно: {s.availableSeats}
                     </Badge>
@@ -148,15 +148,10 @@ export default function Bookings() {
                         {bookings.map((b) => {
                           const payment = paymentBadge[b.paymentStatus ?? ''];
                           return (
-                            <tr key={b.id} className={b.status === 'CANCELLED' ? 'table-secondary' : ''}>
+                            <tr key={b.id}>
                               <td className="text-muted">{b.id}</td>
                               <td>
-                                <div>
-                                  {b.guestName ?? '—'}
-                                  {b.status === 'CANCELLED' && (
-                                    <Badge bg="danger" className="ms-1" style={{ fontSize: '0.65rem' }}>Отменено</Badge>
-                                  )}
-                                </div>
+                                <div>{b.guestName ?? '—'}</div>
                                 {(b.guestPhone || b.guestEmail) && (
                                   <div className="text-muted" style={{ fontSize: '0.78rem' }}>
                                     {b.guestPhone && <span>{b.guestPhone}</span>}
@@ -178,16 +173,14 @@ export default function Bookings() {
                               </td>
                               <td>{formatDateTime(b.createdAt)}</td>
                               <td className="text-center text-nowrap">
-                                {b.status !== 'CANCELLED' && (
-                                  <Button
-                                    variant="outline-danger" size="sm" className="me-1"
-                                    onClick={() => handleCancel(b.id, s.eventId)}
-                                    disabled={actionLoading === b.id}
-                                    title="Отменить"
-                                  >
-                                    {actionLoading === b.id ? <Spinner size="sm" /> : <BsXCircle />}
-                                  </Button>
-                                )}
+                                <Button
+                                  variant="outline-danger" size="sm" className="me-1"
+                                  onClick={() => setDeleteConfirm({ bookingId: b.id, eventId: s.eventId })}
+                                  disabled={actionLoading === b.id}
+                                  title="Удалить бронирование"
+                                >
+                                  {actionLoading === b.id ? <Spinner size="sm" /> : <BsTrash />}
+                                </Button>
                                 {b.paymentStatus === 'PENDING' && (
                                   <Button
                                     variant="outline-success" size="sm"
@@ -211,6 +204,24 @@ export default function Bookings() {
           })}
         </Accordion>
       )}
+
+      <Modal show={deleteConfirm !== null} onHide={() => setDeleteConfirm(null)} centered size="sm">
+        <Modal.Header closeButton>
+          <Modal.Title>Удалить бронирование</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Вы уверены, что хотите удалить бронирование <strong>#{deleteConfirm?.bookingId}</strong>?
+          Это действие необратимо.
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setDeleteConfirm(null)}>
+            Отмена
+          </Button>
+          <Button variant="danger" onClick={handleDelete}>
+            Удалить
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </>
   );
 }
