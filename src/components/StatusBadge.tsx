@@ -6,7 +6,6 @@ interface Props {
 }
 
 const config: Record<BookingStatus, { bg: string; label: string }> = {
-  PENDING: { bg: 'warning', label: 'Ожидает' },
   CONFIRMED: { bg: 'success', label: 'Подтверждено' },
   CANCELLED: { bg: 'danger', label: 'Отменено' },
 };

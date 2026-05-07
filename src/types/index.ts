@@ -64,12 +64,11 @@ export interface AdminBookingRequest {
   guestPhone?: string;
   guestEmail?: string;
   hasCertificate?: boolean;
-  status?: BookingStatus;
   notes?: string;
   priceOptionId?: number;
 }
 
-export type BookingStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED';
+export type BookingStatus = 'CONFIRMED' | 'CANCELLED';
 
 // ── Booking Summary ──
 

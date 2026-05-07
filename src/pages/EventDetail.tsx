@@ -27,7 +27,6 @@ const EMPTY_FORM: AdminBookingRequest = {
   guestPhone: '',
   guestEmail: '',
   hasCertificate: false,
-  status: 'CONFIRMED',
   notes: '',
 };
 
@@ -268,11 +267,18 @@ export default function EventDetail() {
             <BsArrowLeft />
           </Button>
           <h4 className="mb-0">{event.title}</h4>
-          {event.price ? (
-            <Badge bg="success">{Number(event.price).toLocaleString('ru-RU')} ₽</Badge>
-          ) : (
-            <Badge bg="secondary">Бесплатно</Badge>
-          )}
+          {(() => {
+            const opts = event.priceOptions;
+            if (opts && opts.length > 1) {
+              const prices = opts.map(o => Number(o.price));
+              const min = Math.min(...prices);
+              const max = Math.max(...prices);
+              return <Badge bg="success">{min.toLocaleString('ru-RU')} — {max.toLocaleString('ru-RU')} ₽</Badge>;
+            }
+            return event.price
+              ? <Badge bg="success">{Number(event.price).toLocaleString('ru-RU')} ₽</Badge>
+              : <Badge bg="secondary">Бесплатно</Badge>;
+          })()}
         </div>
         <Button variant="warning" onClick={() => navigate(`/admin/events/${id}/edit`)}>
           <BsPencil className="me-1" /> Редактировать
@@ -295,9 +301,18 @@ export default function EventDetail() {
                 <Col md={6}>
                   <p>
                     <strong>Цена:</strong>{' '}
-                    {event.price
-                      ? `${Number(event.price).toLocaleString('ru-RU')} ₽`
-                      : 'Бесплатно'}
+                    {(() => {
+                      const opts = event.priceOptions;
+                      if (opts && opts.length > 1) {
+                        const prices = opts.map(o => Number(o.price));
+                        const min = Math.min(...prices);
+                        const max = Math.max(...prices);
+                        return `${min.toLocaleString('ru-RU')} — ${max.toLocaleString('ru-RU')} ₽`;
+                      }
+                      return event.price
+                        ? `${Number(event.price).toLocaleString('ru-RU')} ₽`
+                        : 'Бесплатно';
+                    })()}
                   </p>
                   <p><strong>Создано:</strong> {formatDateTime(event.createdAt)}</p>
                 </Col>
